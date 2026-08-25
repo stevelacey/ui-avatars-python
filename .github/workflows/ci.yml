@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: pipx install poetry
+      - uses: actions/setup-python@v7
+        with:
+          cache: poetry
+      - run: poetry install --only lint
+      - run: poetry run ruff check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - run: pipx install poetry
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+      - run: poetry env use python${{ matrix.python-version }}
+      - run: poetry install --only main,test
+      - run: poetry run pytest
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: pipx install poetry
+      - uses: actions/setup-python@v7
+        with:
+          cache: poetry
+      - run: poetry build
+      - name: Smoke-test the built wheel in a clean venv
+        run: |
+          python -m venv /tmp/wheel-venv
+          /tmp/wheel-venv/bin/pip install dist/*.whl
+          /tmp/wheel-venv/bin/python -c "
+          from ui_avatars import avatar_url
+          url = avatar_url(name='Ada Lovelace', email='ada@example.com')
+          assert url.startswith('https://www.gravatar.com/avatar/'), url
+          print(url)
+          "
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/

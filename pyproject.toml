@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "ui-avatars"
+version = "1.0.0"
+description = "Deterministic avatar URLs: Gravatar photos with a colorful initials fallback."
+authors = ["Steve Lacey <steve@py.steve.ly>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/stevelacey/ui-avatars"
+repository = "https://github.com/stevelacey/ui-avatars"
+keywords = ["avatar", "gravatar", "initials", "placeholder", "ui-avatars"]
+packages = [{ include = "ui_avatars", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+tailwind_colors = "^1.4.1"
+
+[tool.poetry.group.lint.dependencies]
+ruff = "*"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^9.0"
+pytest-cov = "^5.0"
+pytest-randomly = "^4.1.0"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov=ui_avatars",
+    "--cov-report=term-missing",
+    "--strict-markers",
+]
+python_files = ["tests.py", "*_tests.py"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+
+[tool.ruff.lint]
+select = ["B", "C4", "E", "F", "I", "N", "S", "UP", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ui_avatars"]
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"

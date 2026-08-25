@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: >-
+          Version bump to force (auto = detect from commit messages, current =
+          tag and publish the committed version as-is, no bump)
+        type: choice
+        options: [auto, patch, minor, major, current]
+        default: auto
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: "github.event_name == 'workflow_dispatch' || (!startsWith(github.event.head_commit.message, 'chore: release ') && !startsWith(github.event.head_commit.message, 'Initial commit'))"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - run: pipx install poetry
+      - uses: actions/setup-python@v7
+        with:
+          cache: poetry
+
+      - name: Determine version bump
+        id: bump-type
+        env:
+          BEFORE: ${{ github.event.before }}
+          FORCED: ${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'auto' }}
+        run: |
+          if [ "$FORCED" != "auto" ]; then
+            echo "type=$FORCED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Scan every commit included in this push (not just the latest),
+          # so multiple PRs merged together are all considered. [major] wins
+          # over [minor] if both are present; no keyword defaults to patch.
+          if [ -n "$BEFORE" ] && git cat-file -e "$BEFORE" 2>/dev/null; then
+            messages="$(git log "$BEFORE"..HEAD --format=%B)"
+          else
+            messages="$(git log -1 --format=%B)"
+          fi
+
+          if echo "$messages" | grep -qiE '\[major\]'; then
+            echo "type=major" >> "$GITHUB_OUTPUT"
+          elif echo "$messages" | grep -qiE '\[minor\]'; then
+            echo "type=minor" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump version, commit, and tag
+        id: bump
+        run: |
+          if [ "${{ steps.bump-type.outputs.type }}" = "current" ]; then
+            version="$(poetry version --short)"
+          else
+            poetry version "${{ steps.bump-type.outputs.type }}"
+            version="$(poetry version --short)"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -am "chore: release v$version"
+            git push origin HEAD:main
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          git tag "v$version"
+          git push origin "v$version"
+
+  test:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.release.outputs.version }}
+      - run: pipx install poetry
+      - uses: actions/setup-python@v7
+        with:
+          cache: poetry
+      - run: poetry install --with test
+      - run: poetry run pytest
+
+  publish:
+    needs: [release, test]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.release.outputs.version }}
+      - run: pipx install poetry
+      - uses: actions/setup-python@v7
+        with:
+          cache: poetry
+      - run: poetry build
+      - uses: pypa/gh-action-pypi-publish@release/v1

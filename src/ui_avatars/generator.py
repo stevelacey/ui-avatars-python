@@ -11,8 +11,10 @@ class Avatars:
         self,
         *,
         alpha: float = 0.2,
+        background: str | None = None,
         bold: bool = True,
         colors: list[str | tuple[str, str]] = COLORS,
+        font_color: str | None = None,
         font_size: float = 0.4,
         length: int = 2,
         rounded: bool = False,
@@ -20,8 +22,10 @@ class Avatars:
         uppercase: bool = True,
     ) -> None:
         self.alpha = alpha
+        self.background = background
         self.bold = bold
         self.colors = list(colors)
+        self.font_color = font_color
         self.font_size = font_size
         self.length = length
         self.rounded = rounded
@@ -34,8 +38,10 @@ class Avatars:
         name: str | None = None,
         email: str | None = None,
         alpha: float | None = None,
+        background: str | None = None,
         bold: bool | None = None,
-        color: str | tuple[str, str] | None = None,
+        color: str | None = None,
+        font_color: str | None = None,
         font_size: float | None = None,
         length: int | None = None,
         rounded: bool | None = None,
@@ -46,12 +52,14 @@ class Avatars:
             raise ValueError("requires at least one of name or email")
 
         alpha = self.alpha if alpha is None else alpha
-        bold = self.bold if bold is None else bold
+        background = self.background if background is None else background
+        bold = int(self.bold if bold is None else bold)
+        font_color = self.font_color if font_color is None else font_color
         font_size = self.font_size if font_size is None else font_size
         length = self.length if length is None else length
-        rounded = self.rounded if rounded is None else rounded
+        rounded = int(self.rounded if rounded is None else rounded)
         size = self.size if size is None else size
-        uppercase = self.uppercase if uppercase is None else uppercase
+        uppercase = int(self.uppercase if uppercase is None else uppercase)
 
         if not name:
             local_part = email.strip().split("@", 1)[0]
@@ -61,26 +69,39 @@ class Avatars:
             (email or name).strip().lower().encode(), usedforsecurity=False
         ).hexdigest()
 
+        background_color, text_color = color, color
         if color is None:
-            color = self.colors[int(digest[:8], 16) % len(self.colors)]
+            palette_entry = self.colors[int(digest[:8], 16) % len(self.colors)]
+            background_color, text_color = (
+                palette_entry
+                if isinstance(palette_entry, tuple)
+                else (palette_entry, palette_entry)
+            )
+        if background is not None:
+            background_color = background
+        if font_color is not None:
+            text_color = font_color
 
-        background, font_color = color if isinstance(color, tuple) else (color, color)
-        background, font_color = background.lstrip("#"), font_color.lstrip("#")
-        if len(background) == 3:
-            background = "".join(c * 2 for c in background)
-        if len(font_color) == 3:
-            font_color = "".join(c * 2 for c in font_color)
-        alpha_255 = min(255, max(0, round(alpha * 255)))
-        background_color = f"{background}{alpha_255:02x}"
-        image_format = "png" if email else "svg"
+        background_color, text_color = (
+            background_color.lstrip("#"),
+            text_color.lstrip("#"),
+        )
+        if len(background_color) == 3:
+            background_color = "".join(c * 2 for c in background_color)
+        if len(text_color) == 3:
+            text_color = "".join(c * 2 for c in text_color)
 
-        if image_format == "png":
-            r, g, b = (int(background[i : i + 2], 16) for i in (0, 2, 4))
+        format = "png" if email else "svg"
+        if format == "png":
+            r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
             background_color = f"rgba({r},{g},{b},{alpha})"
+        else:
+            alpha_suffix = f"{min(255, max(0, round(alpha * 255))):02x}"
+            background_color = f"{background_color}{alpha_suffix}"
 
         url = (
-            f"https://ui-avatars.com/api/{quote(name)}/{size}/{background_color}/{font_color}/"
-            f"{length}/{font_size}/{int(rounded)}/{int(bold)}/{int(uppercase)}/{image_format}"
+            f"https://ui-avatars.com/api/{quote(name)}/{size}/{background_color}/{text_color}/"
+            f"{length}/{font_size}/{rounded}/{bold}/{uppercase}/{format}"
         )
 
         if email:
@@ -92,8 +113,10 @@ class Avatars:
         self,
         *,
         alpha: float | None = None,
+        background: str | None = None,
         bold: bool | None = None,
         colors: list[str | tuple[str, str]] | None = None,
+        font_color: str | None = None,
         font_size: float | None = None,
         length: int | None = None,
         rounded: bool | None = None,
@@ -102,10 +125,14 @@ class Avatars:
     ) -> "Avatars":
         if alpha is not None:
             self.alpha = alpha
+        if background is not None:
+            self.background = background
         if bold is not None:
             self.bold = bold
         if colors is not None:
             self.colors = list(colors)
+        if font_color is not None:
+            self.font_color = font_color
         if font_size is not None:
             self.font_size = font_size
         if length is not None:

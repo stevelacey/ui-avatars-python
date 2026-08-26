@@ -87,6 +87,47 @@ def test_tuple_color_entries_can_be_made_fully_opaque_via_alpha(name):
     assert "/fee2e2ff/ef4444/" in url
 
 
+def test_opaque_single_color_keeps_the_text_the_same_hue(name):
+    avatars = Avatars(colors=["#ef4444"], alpha=1)
+    url = avatars.build(name=name)
+    assert "/ef4444ff/ef4444/" in url
+
+
+def test_font_color_overrides_the_palette_derived_text_color(name):
+    avatars = Avatars(colors=[("#fee2e2", "#ef4444")])
+    url = avatars.build(name=name, font_color="#fff")
+    assert "/ffffff/" in url
+    assert "ef4444" not in url
+
+
+def test_font_color_overrides_regardless_of_alpha(name):
+    avatars = Avatars(colors=["#ef4444"], alpha=1)
+    url = avatars.build(name=name, font_color="#000")
+    assert "/ef4444ff/000000/" in url
+
+
+def test_configure_sets_a_persistent_font_color_override(name):
+    avatars = Avatars(colors=[("#fee2e2", "#ef4444")]).configure(font_color="#fff")
+    url = avatars.build(name=name)
+    assert "/ffffff/" in url
+    assert "ef4444" not in url
+
+
+def test_background_overrides_the_palette_derived_background(name):
+    avatars = Avatars(colors=[("#fee2e2", "#ef4444")])
+    url = avatars.build(name=name, background="#000", alpha=1)
+    assert "/000000ff/ef4444/" in url
+
+
+def test_configure_sets_a_persistent_background_override(name):
+    avatars = Avatars(alpha=1).configure(background="#000000")
+    ada = avatars.build(name=name)
+    grace = avatars.build(name="Grace Hopper")
+    assert "/000000ff/" in ada
+    assert "/000000ff/" in grace
+    assert ada.split("/000000ff/")[1] != grace.split("/000000ff/")[1]
+
+
 def test_tuple_color_entries_apply_alpha_on_the_png_path_too(name, email):
     avatars = Avatars(colors=[("#fee2e2", "#ef4444")])
     url = unquote(avatars.build(name=name, email=email))
@@ -268,9 +309,9 @@ def test_color_bypasses_the_configured_palette(name):
     assert "/dc262633/dc2626/" in url
 
 
-def test_color_accepts_a_background_text_tuple(name):
+def test_color_combines_with_font_color(name):
     avatars = Avatars()
-    url = avatars.build(name=name, color=("#fee2e2", "#dc2626"))
+    url = avatars.build(name=name, color="#fee2e2", font_color="#dc2626")
     assert "/fee2e233/dc2626/" in url
 
 

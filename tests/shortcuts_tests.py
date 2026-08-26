@@ -153,8 +153,8 @@ def test_color_forces_the_same_color_regardless_of_name():
     assert "/dc262633/dc2626/" in grace
 
 
-def test_color_accepts_a_background_text_tuple(name):
-    url = avatar_url(name=name, color=("#fee2e2", "#dc2626"))
+def test_color_combines_with_font_color(name):
+    url = avatar_url(name=name, color="#fee2e2", font_color="#dc2626")
     assert "/fee2e233/dc2626/" in url
 
 

@@ -58,8 +58,11 @@ avatar_url(name="Ada Lovelace", alpha=0.75, size=256, rounded=True)
 avatar_url(name="Ada Lovelace", color="#dc2626")
 # pick a specific color, skipping the palette
 
-avatar_url(name="Ada Lovelace", alpha=1, color=("#dc2626", "#fff"))
-# supply background and text color separately via a tuple
+avatar_url(name="Ada Lovelace", alpha=1, background="#000")
+# pin the background, let the text color rotate with the palette
+
+avatar_url(name="Ada Lovelace", font_color="#fff")
+# pin the text color, let the background rotate with the palette
 ```
 
 ## Configuration

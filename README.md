@@ -1,9 +1,10 @@
 # ui-avatars
 
-[![CI](https://img.shields.io/github/actions/workflow/status/stevelacey/ui-avatars/ci.yml?branch=main)](https://github.com/stevelacey/ui-avatars/actions)
-[![PyPI](https://img.shields.io/pypi/v/ui-avatars.svg)](https://pypi.org/project/ui-avatars/)
-[![Python versions](https://img.shields.io/pypi/pyversions/ui-avatars.svg)](https://pypi.org/project/ui-avatars/)
-[![License](https://img.shields.io/github/license/stevelacey/ui-avatars)](LICENSE.md)
+[![PyPI](https://img.shields.io/pypi/v/ui-avatars.svg?style=flat-square)](https://pypi.org/project/ui-avatars/)
+[![CI](https://img.shields.io/github/actions/workflow/status/stevelacey/ui-avatars/ci.yml?branch=main&style=flat-square)](https://github.com/stevelacey/ui-avatars/actions/workflows/ci.yml?query=branch:main)
+[![Coverage](https://img.shields.io/codecov/c/github/stevelacey/ui-avatars?style=flat-square)](https://codecov.io/gh/stevelacey/ui-avatars)
+[![Downloads](https://img.shields.io/pypi/dm/ui-avatars.svg?style=flat-square)](https://pypi.org/project/ui-avatars/)
+[![License](https://img.shields.io/github/license/stevelacey/ui-avatars?style=flat-square)](LICENSE.md)
 
 Deterministic avatar URLs that work great on both light and dark designs: a real
 [Gravatar](https://gravatar.com) photo if there's an email, otherwise colored initials

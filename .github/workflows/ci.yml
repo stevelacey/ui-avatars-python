@@ -1,14 +1,8 @@
 name: CI
 
 on:
-  pull_request:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  pull_request: ~
+  push: ~
 
 jobs:
   lint:
@@ -38,6 +32,10 @@ jobs:
       - run: poetry env use python${{ matrix.python-version }}
       - run: poetry install --only main,test
       - run: poetry run pytest
+      - if: matrix.python-version == '3.14'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   build:
     needs: [lint, test]

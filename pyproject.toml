@@ -26,6 +26,7 @@ pytest-randomly = "^4.1.0"
 addopts = [
     "--cov=ui_avatars",
     "--cov-report=term-missing",
+    "--cov-report=xml",
     "--strict-markers",
 ]
 python_files = ["tests.py", "*_tests.py"]

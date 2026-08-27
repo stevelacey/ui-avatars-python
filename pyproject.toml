@@ -6,7 +6,7 @@ authors = [{ name = "Steve Lacey", email = "steve@steve.ly" }]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
-keywords = ["avatar", "gravatar", "initials", "placeholder", "ui-avatars"]
+keywords = ["avatar", "gravatar", "libravatar", "initials", "placeholder", "ui-avatars"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",

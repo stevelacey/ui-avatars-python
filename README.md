@@ -6,9 +6,10 @@
 [![Downloads](https://img.shields.io/pypi/dm/ui-avatars.svg?style=flat-square)](https://pypi.org/project/ui-avatars/)
 [![License](https://img.shields.io/github/license/stevelacey/ui-avatars?style=flat-square)](LICENSE.md)
 
-Deterministic avatar URLs that work great on both light and dark designs: a real
-[Gravatar](https://gravatar.com) photo if there's an email, otherwise colored initials
-from a hash via [ui-avatars.com](https://ui-avatars.com). Same input, same URL, always.
+Deterministic avatar URLs for light and dark designs:
+[Gravatar](https://gravatar.com) or [Libravatar](https://libravatar.org) photos falling
+back to colored initials via [ui-avatars.com](https://ui-avatars.com).
+Same input, same URL, always.
 
 <table>
 <tr>

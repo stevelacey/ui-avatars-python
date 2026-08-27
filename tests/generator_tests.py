@@ -165,6 +165,48 @@ def test_default_size_is_128():
     assert Avatars().size == 128
 
 
+def test_default_source_is_gravatar():
+    assert Avatars().source == "gravatar"
+
+
+def test_source_selects_the_photo_host(name, email):
+    url = Avatars().build(name=name, email=email, source="libravatar")
+    assert url.startswith("https://seccdn.libravatar.org/avatar/")
+
+
+def test_unknown_source_raises(name, email):
+    with pytest.raises(ValueError, match="unknown source"):
+        Avatars().build(name=name, email=email, source="notarealsource")
+
+
+def test_unknown_source_raises_even_without_email(name):
+    with pytest.raises(ValueError, match="unknown source"):
+        Avatars().build(name=name, source="notarealsource")
+
+
+def test_custom_host_without_a_scheme_defaults_to_https(name, email):
+    url = Avatars().build(name=name, email=email, source="avatars.example.com")
+    assert url.startswith("https://avatars.example.com/avatar/")
+
+
+def test_custom_host_keeps_an_explicit_scheme(name, email):
+    url = Avatars().build(name=name, email=email, source="https://avatars.example.com")
+    assert url.startswith("https://avatars.example.com/avatar/")
+
+
+def test_configure_updates_source_in_place():
+    avatars = Avatars()
+    avatars.configure(source="libravatar")
+    assert avatars.source == "libravatar"
+
+
+def test_source_can_be_overridden_per_call_without_mutating_the_instance(name, email):
+    avatars = Avatars()
+    url = avatars.build(name=name, email=email, source="libravatar")
+    assert "libravatar" in url
+    assert avatars.source == "gravatar"
+
+
 def test_default_ui_avatars_options_match_the_original_hardcoded_values(name):
     avatars = Avatars()
     assert (

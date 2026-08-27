@@ -64,6 +64,12 @@ avatar_url(name="Ada Lovelace", alpha=1, background="#000")
 
 avatar_url(name="Ada Lovelace", font_color="#fff")
 # pin the text color, let the background rotate with the palette
+
+avatar_url(name="Ada Lovelace", email="ada@example.com", source="libravatar")
+# look up the photo on Libravatar instead of Gravatar
+
+avatar_url(name="Ada Lovelace", email="ada@example.com", source="avatars.example.com")
+# or point at a self-hosted Gravatar-compatible server
 ```
 
 ## Configuration

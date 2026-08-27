@@ -21,18 +21,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - run: pipx install poetry
       - uses: actions/setup-python@v7
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
           cache: poetry
-      - run: poetry env use python${{ matrix.python-version }}
+      - run: poetry env use python${{ matrix.python }}
       - run: poetry install --only main,test
       - run: poetry run pytest
-      - if: matrix.python-version == '3.14'
+      - if: matrix.python == '3.14'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

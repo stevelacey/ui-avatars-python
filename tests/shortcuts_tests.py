@@ -133,6 +133,11 @@ def test_size_can_be_overridden_per_call(name):
     assert "/64/" in avatar_url(name=name, size=64)
 
 
+def test_source_can_be_overridden_per_call(name, email):
+    url = avatar_url(name=name, email=email, source="libravatar")
+    assert url.startswith("https://seccdn.libravatar.org/avatar/")
+
+
 def test_ui_avatars_options_can_be_overridden_per_call(name):
     url = avatar_url(
         name=name, length=1, font_size=0.5, rounded=True, bold=False, uppercase=False

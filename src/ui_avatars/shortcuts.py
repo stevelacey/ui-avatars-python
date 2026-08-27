@@ -14,6 +14,7 @@ def avatar_url(
     length: int | None = None,
     rounded: bool | None = None,
     size: int | None = None,
+    source: str | None = None,
     uppercase: bool | None = None,
 ) -> str:
     return avatars.build(
@@ -28,5 +29,6 @@ def avatar_url(
         length=length,
         rounded=rounded,
         size=size,
+        source=source,
         uppercase=uppercase,
     )

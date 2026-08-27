@@ -7,6 +7,14 @@ from tailwind_colors import TCH
 class Avatars:
     COLORS = list(TCH.RAINBOW_500)
 
+    GRAVATAR = "gravatar"
+    LIBRAVATAR = "libravatar"
+
+    SOURCES = {
+        GRAVATAR: "https://www.gravatar.com",
+        LIBRAVATAR: "https://seccdn.libravatar.org",
+    }
+
     def __init__(
         self,
         *,
@@ -19,6 +27,7 @@ class Avatars:
         length: int = 2,
         rounded: bool = False,
         size: int = 128,
+        source: str = GRAVATAR,
         uppercase: bool = True,
     ) -> None:
         self.alpha = alpha
@@ -30,6 +39,7 @@ class Avatars:
         self.length = length
         self.rounded = rounded
         self.size = size
+        self.source = source
         self.uppercase = uppercase
 
     def build(
@@ -46,11 +56,9 @@ class Avatars:
         length: int | None = None,
         rounded: bool | None = None,
         size: int | None = None,
+        source: str | None = None,
         uppercase: bool | None = None,
     ) -> str:
-        if not name and not email:
-            raise ValueError("requires at least one of name or email")
-
         alpha = self.alpha if alpha is None else alpha
         background = self.background if background is None else background
         bold = int(self.bold if bold is None else bold)
@@ -59,7 +67,17 @@ class Avatars:
         length = self.length if length is None else length
         rounded = int(self.rounded if rounded is None else rounded)
         size = self.size if size is None else size
+        source = self.source if source is None else source
         uppercase = int(self.uppercase if uppercase is None else uppercase)
+
+        if not name and not email:
+            raise ValueError("requires at least one of name or email")
+
+        origin = self.SOURCES.get(
+            source, source if "://" in source else f"https://{source}"
+        )
+        if "." not in origin:
+            raise ValueError(f"unknown source: {source!r}")
 
         if not name:
             local_part = email.strip().split("@", 1)[0]
@@ -105,7 +123,7 @@ class Avatars:
         )
 
         if email:
-            url = f"https://www.gravatar.com/avatar/{digest}?s={size}&d={quote(url, safe='')}"
+            url = f"{origin}/avatar/{digest}?s={size}&d={quote(url, safe='')}"
 
         return url
 
@@ -121,6 +139,7 @@ class Avatars:
         length: int | None = None,
         rounded: bool | None = None,
         size: int | None = None,
+        source: str | None = None,
         uppercase: bool | None = None,
     ) -> "Avatars":
         if alpha is not None:
@@ -141,6 +160,8 @@ class Avatars:
             self.rounded = rounded
         if size is not None:
             self.size = size
+        if source is not None:
+            self.source = source
         if uppercase is not None:
             self.uppercase = uppercase
         return self

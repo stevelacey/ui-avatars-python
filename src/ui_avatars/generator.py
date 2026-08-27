@@ -68,14 +68,14 @@ class Avatars:
         rounded = int(self.rounded if rounded is None else rounded)
         size = self.size if size is None else size
         source = self.source if source is None else source
+        origin = self.SOURCES.get(
+            source, source if "://" in source else f"https://{source}"
+        )
         uppercase = int(self.uppercase if uppercase is None else uppercase)
 
         if not name and not email:
             raise ValueError("requires at least one of name or email")
 
-        origin = self.SOURCES.get(
-            source, source if "://" in source else f"https://{source}"
-        )
         if "." not in origin:
             raise ValueError(f"unknown source: {source!r}")
 
@@ -109,7 +109,7 @@ class Avatars:
         if len(text_color) == 3:
             text_color = "".join(c * 2 for c in text_color)
 
-        format = "png" if email else "svg"
+        format = "svg" if not email or source == self.LIBRAVATAR else "png"
         if format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
             background_color = f"rgba({r},{g},{b},{alpha})"

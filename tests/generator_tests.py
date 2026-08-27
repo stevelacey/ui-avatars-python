@@ -207,6 +207,21 @@ def test_source_can_be_overridden_per_call_without_mutating_the_instance(name, e
     assert avatars.source == "gravatar"
 
 
+def test_email_with_gravatar_defaults_to_png(name, email):
+    url = Avatars().build(name=name, email=email)
+    assert url.endswith("%2Fpng")
+
+
+def test_email_with_libravatar_defaults_to_svg(name, email):
+    url = Avatars().build(name=name, email=email, source="libravatar")
+    assert url.endswith("%2Fsvg")
+
+
+def test_no_email_defaults_to_svg_regardless_of_source(name):
+    url = Avatars().build(name=name, source="libravatar")
+    assert url.endswith("/svg")
+
+
 def test_default_ui_avatars_options_match_the_original_hardcoded_values(name):
     avatars = Avatars()
     assert (

@@ -1,18 +1,33 @@
-[tool.poetry]
+[project]
 name = "ui-avatars"
-version = "1.1.0"
+version = "1.1.1"
 description = "Deterministic avatar URLs: Gravatar photos with a colorful initials fallback."
-authors = ["Steve Lacey <steve@py.steve.ly>"]
+authors = [{ name = "Steve Lacey", email = "steve@steve.ly" }]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/stevelacey/ui-avatars"
-repository = "https://github.com/stevelacey/ui-avatars"
+requires-python = ">=3.10,<4.0"
 keywords = ["avatar", "gravatar", "initials", "placeholder", "ui-avatars"]
-packages = [{ include = "ui_avatars", from = "src" }]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = ["tailwind_colors>=1.4.1,<2.0.0"]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-tailwind_colors = "^1.4.1"
+[project.urls]
+Homepage = "https://github.com/stevelacey/ui-avatars"
+Repository = "https://github.com/stevelacey/ui-avatars"
+Issues = "https://github.com/stevelacey/ui-avatars/issues"
+
+[tool.poetry]
+packages = [{ include = "ui_avatars", from = "src" }]
 
 [tool.poetry.group.lint.dependencies]
 ruff = "*"

@@ -24,6 +24,7 @@ class Avatars:
         colors: list[str | tuple[str, str]] = COLORS,
         font_color: str | None = None,
         font_size: float = 0.4,
+        format: str | None = None,
         length: int = 2,
         rounded: bool = False,
         size: int = 128,
@@ -36,6 +37,7 @@ class Avatars:
         self.colors = list(colors)
         self.font_color = font_color
         self.font_size = font_size
+        self.format = format
         self.length = length
         self.rounded = rounded
         self.size = size
@@ -53,6 +55,7 @@ class Avatars:
         color: str | None = None,
         font_color: str | None = None,
         font_size: float | None = None,
+        format: str | None = None,
         length: int | None = None,
         rounded: bool | None = None,
         size: int | None = None,
@@ -64,6 +67,7 @@ class Avatars:
         bold = int(self.bold if bold is None else bold)
         font_color = self.font_color if font_color is None else font_color
         font_size = self.font_size if font_size is None else font_size
+        format = self.format if format is None else format
         length = self.length if length is None else length
         rounded = int(self.rounded if rounded is None else rounded)
         size = self.size if size is None else size
@@ -75,6 +79,9 @@ class Avatars:
 
         if not name and not email:
             raise ValueError("requires at least one of name or email")
+
+        if format is not None and format not in ("png", "svg"):
+            raise ValueError(f"unknown format: {format!r}")
 
         if "." not in origin:
             raise ValueError(f"unknown source: {source!r}")
@@ -109,7 +116,8 @@ class Avatars:
         if len(text_color) == 3:
             text_color = "".join(c * 2 for c in text_color)
 
-        format = "svg" if not email or source == self.LIBRAVATAR else "png"
+        if format is None:
+            format = "svg" if not email or source == self.LIBRAVATAR else "png"
         if format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
             background_color = f"rgba({r},{g},{b},{alpha})"
@@ -136,6 +144,7 @@ class Avatars:
         colors: list[str | tuple[str, str]] | None = None,
         font_color: str | None = None,
         font_size: float | None = None,
+        format: str | None = None,
         length: int | None = None,
         rounded: bool | None = None,
         size: int | None = None,
@@ -154,6 +163,8 @@ class Avatars:
             self.font_color = font_color
         if font_size is not None:
             self.font_size = font_size
+        if format is not None:
+            self.format = format
         if length is not None:
             self.length = length
         if rounded is not None:

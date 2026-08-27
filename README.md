@@ -71,6 +71,9 @@ avatar_url(name="Ada Lovelace", email="ada@example.com", source="libravatar")
 
 avatar_url(name="Ada Lovelace", email="ada@example.com", source="avatars.example.com")
 # or point at a self-hosted Gravatar-compatible server
+
+avatar_url(name="Ada Lovelace", email="ada@example.com", format="png")
+# force png or svg, note Gravatar errors for svg default images
 ```
 
 ## Configuration

@@ -138,6 +138,11 @@ def test_source_can_be_overridden_per_call(name, email):
     assert url.startswith("https://seccdn.libravatar.org/avatar/")
 
 
+def test_format_can_be_overridden_per_call(name, email):
+    url = avatar_url(name=name, email=email, format="svg")
+    assert url.endswith("%2Fsvg")
+
+
 def test_ui_avatars_options_can_be_overridden_per_call(name):
     url = avatar_url(
         name=name, length=1, font_size=0.5, rounded=True, bold=False, uppercase=False

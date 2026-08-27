@@ -207,6 +207,10 @@ def test_source_can_be_overridden_per_call_without_mutating_the_instance(name, e
     assert avatars.source == "gravatar"
 
 
+def test_default_format_is_none():
+    assert Avatars().format is None
+
+
 def test_email_with_gravatar_defaults_to_png(name, email):
     url = Avatars().build(name=name, email=email)
     assert url.endswith("%2Fpng")
@@ -220,6 +224,44 @@ def test_email_with_libravatar_defaults_to_svg(name, email):
 def test_no_email_defaults_to_svg_regardless_of_source(name):
     url = Avatars().build(name=name, source="libravatar")
     assert url.endswith("/svg")
+
+
+def test_format_can_force_svg_on_gravatar_even_though_it_is_broken_there(name, email):
+    url = Avatars().build(name=name, email=email, format="svg")
+    assert url.endswith("%2Fsvg")
+
+
+def test_format_can_force_png_on_libravatar(name, email):
+    url = Avatars().build(name=name, email=email, source="libravatar", format="png")
+    assert url.endswith("%2Fpng")
+
+
+def test_format_can_force_png_without_an_email(name):
+    url = Avatars().build(name=name, format="png")
+    assert url.endswith("/png")
+
+
+def test_unknown_format_raises(name, email):
+    with pytest.raises(ValueError, match="unknown format"):
+        Avatars().build(name=name, email=email, format="webp")
+
+
+def test_unknown_format_raises_even_without_email(name):
+    with pytest.raises(ValueError, match="unknown format"):
+        Avatars().build(name=name, format="webp")
+
+
+def test_configure_updates_format_in_place():
+    avatars = Avatars()
+    avatars.configure(format="png")
+    assert avatars.format == "png"
+
+
+def test_format_can_be_overridden_per_call_without_mutating_the_instance(name):
+    avatars = Avatars(format="png")
+    url = avatars.build(name=name, format="svg")
+    assert url.endswith("/svg")
+    assert avatars.format == "png"
 
 
 def test_default_ui_avatars_options_match_the_original_hardcoded_values(name):

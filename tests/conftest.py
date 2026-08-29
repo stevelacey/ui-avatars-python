@@ -15,6 +15,8 @@ def email():
 
 @fixture
 def restore_defaults():
-    original_colors, original_size = avatars.colors, avatars.size
+    original = dict(vars(avatars))
+    original["colors"] = list(avatars.colors)
     yield avatars
-    avatars.configure(colors=original_colors, size=original_size)
+    for key, value in original.items():
+        setattr(avatars, key, value)

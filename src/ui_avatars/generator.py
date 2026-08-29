@@ -8,6 +8,7 @@ class Avatars:
     COLORS = list(TCH.RAINBOW_500)
 
     DEFAULT_HOST = "https://ui-avatars.com"
+    DEFAULT_PROXY = "https://wsrv.nl"
 
     REGION_EU = "eu"
     REGION_NA = "na"
@@ -37,6 +38,8 @@ class Avatars:
         format: str | None = None,
         host: str | None = None,
         length: int = 2,
+        mask: str | None = None,
+        proxy: str | None = None,
         region: str | None = None,
         rounded: bool = False,
         size: int = 128,
@@ -52,6 +55,8 @@ class Avatars:
         self.format = format
         self.host = host
         self.length = length
+        self.mask = mask
+        self.proxy = proxy
         self.region = region
         self.rounded = rounded
         self.size = size
@@ -72,6 +77,8 @@ class Avatars:
         format: str | None = None,
         host: str | None = None,
         length: int | None = None,
+        mask: str | None = None,
+        proxy: str | None = None,
         region: str | None = None,
         rounded: bool | None = None,
         size: int | None = None,
@@ -84,23 +91,25 @@ class Avatars:
         font_color = self.font_color if font_color is None else font_color
         font_size = self.font_size if font_size is None else font_size
         format = self.format if format is None else format
-        host = self.parse_url(host or self.host)
+        host = self.parse_hostname(host or self.host)
         length = self.length if length is None else length
         region = self.region if region is None else region
         rounded = int(self.rounded if rounded is None else rounded)
+        mask = mask or self.mask or email and rounded and "circle" or ""
+        proxy = self.parse_hostname(proxy or self.proxy)
         size = self.size if size is None else size
         source = self.source if source is None else source
-        origin = self.parse_url(self.SOURCES.get(source, source))
+        origin = self.parse_hostname(self.SOURCES.get(source, source))
         uppercase = int(self.uppercase if uppercase is None else uppercase)
 
         if not name and not email:
             raise ValueError("requires at least one of name or email")
 
-        if format is not None and format not in ("png", "svg"):
-            raise ValueError(f"unknown format: {format!r}")
-
         if host and "." not in host:
             raise ValueError(f"unknown host: {host!r}")
+
+        if proxy and "." not in proxy:
+            raise ValueError(f"unknown proxy: {proxy!r}")
 
         if region and region not in self.REGIONS:
             raise ValueError(f"unknown region: {region!r}")
@@ -109,6 +118,7 @@ class Avatars:
             raise ValueError(f"unknown source: {source!r}")
 
         host = host or self.REGIONS.get(region) or self.DEFAULT_HOST
+        proxy = proxy or self.DEFAULT_PROXY
 
         if not name:
             local_part = email.strip().split("@", 1)[0]
@@ -143,7 +153,7 @@ class Avatars:
             text_color = "".join(c * 2 for c in text_color)
 
         if format is None:
-            format = "png" if email and "gravatar.com" in origin else "svg"
+            format = "png" if email and ("gravatar.com" in origin or rounded) else "svg"
 
         if format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
@@ -160,6 +170,9 @@ class Avatars:
         if email:
             url = f"{origin}/avatar/{digest}?s={size}&d={quote(url, safe='')}"
 
+        if email and rounded or format not in ("png", "svg") or mask:
+            url = f"{proxy}/?url={quote(url, safe='')}&w={size}&h={size}&mask={mask}&output={format}"
+
         return url
 
     def configure(
@@ -174,6 +187,8 @@ class Avatars:
         format: str | None = None,
         host: str | None = None,
         length: int | None = None,
+        mask: str | None = None,
+        proxy: str | None = None,
         region: str | None = None,
         rounded: bool | None = None,
         size: int | None = None,
@@ -198,6 +213,10 @@ class Avatars:
             self.host = host
         if length is not None:
             self.length = length
+        if mask is not None:
+            self.mask = mask
+        if proxy is not None:
+            self.proxy = proxy
         if region is not None:
             self.region = region
         if rounded is not None:
@@ -211,7 +230,7 @@ class Avatars:
 
         return self
 
-    def parse_url(self, value):
+    def parse_hostname(self, value):
         return f"https://{value}" if value and "://" not in value else value
 
 

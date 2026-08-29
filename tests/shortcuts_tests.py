@@ -1,13 +1,14 @@
+import hashlib
 import re
 from urllib.parse import unquote
 
-import pytest
+from pytest import raises
 
 from ui_avatars import Avatars, avatar_url, avatars
 
 
 def test_requires_name_or_email():
-    with pytest.raises(ValueError, match="requires at least one"):
+    with raises(ValueError, match="requires at least one"):
         avatar_url()
 
 
@@ -75,8 +76,6 @@ def test_is_deterministic(name):
 
 
 def test_gravatar_hash_matches_email_hash(name, email):
-    import hashlib
-
     digest = hashlib.md5(email.encode(), usedforsecurity=False).hexdigest()
     assert digest in avatar_url(name=name, email=email)
 
@@ -143,6 +142,16 @@ def test_host_without_a_scheme_defaults_to_https(name):
     assert url.startswith("https://avatars.example.com/api/")
 
 
+def test_proxy_can_be_overridden_per_call(name):
+    url = avatar_url(name=name, mask="hexagon", proxy="https://images.example.com")
+    assert url.startswith("https://images.example.com/?url=")
+
+
+def test_proxy_without_a_scheme_defaults_to_https(name):
+    url = avatar_url(name=name, mask="hexagon", proxy="images.example.com")
+    assert url.startswith("https://images.example.com/?url=")
+
+
 def test_region_can_be_overridden_per_call(name):
     url = avatar_url(name=name, region="eu")
     assert url.startswith("https://eu.ui-avatars.com/api/")
@@ -167,11 +176,39 @@ def test_format_can_be_overridden_per_call(name, email):
     assert url.endswith("%2Fsvg")
 
 
+def test_non_standard_format_is_proxied_through_wsrv(name):
+    url = avatar_url(name=name, format="webp")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert url.endswith("&output=webp")
+
+
 def test_ui_avatars_options_can_be_overridden_per_call(name):
     url = avatar_url(
         name=name, length=1, font_size=0.5, rounded=True, bold=False, uppercase=False
     )
     assert url.endswith("/1/0.5/1/0/0/svg")
+
+
+def test_rounded_without_email_is_not_proxied_through_wsrv(name):
+    url = avatar_url(name=name, rounded=True)
+    assert url.startswith("https://ui-avatars.com/api/")
+    assert "wsrv.nl" not in url
+
+
+def test_with_email_and_rounded_is_proxied_through_wsrv(name, email):
+    url = avatar_url(name=name, email=email, rounded=True)
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=circle" in url
+    assert "&w=128&h=128" in url
+    assert url.endswith("&output=png")
+    assert "gravatar.com" in unquote(url)
+
+
+def test_mask_is_proxied_through_wsrv(name):
+    url = avatar_url(name=name, mask="hexagon")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=hexagon" in url
+    assert url.endswith("&output=svg")
 
 
 def test_alpha_can_be_overridden_per_call(name, restore_defaults):
@@ -203,9 +240,7 @@ def test_color_does_not_mutate_the_shared_avatars_instance(name):
     assert avatars.colors == before
 
 
-def test_hash_prefixed_colors_do_not_leak_a_literal_hash_into_the_url(
-    name, restore_defaults
-):
+def test_hash_prefixed_colors_do_not_leak_hash_into_url(name, restore_defaults):
     restore_defaults.configure(colors=["#000000"])
     url = avatar_url(name=name)
     assert "/000000/" in url
@@ -213,6 +248,6 @@ def test_hash_prefixed_colors_do_not_leak_a_literal_hash_into_the_url(
 
 
 def test_per_call_overrides_do_not_mutate_the_shared_avatars_instance(name):
-    before = (avatars.bold, avatars.size)
-    avatar_url(name=name, bold=False, size=64)
-    assert (avatars.bold, avatars.size) == before
+    before = (avatars.bold, avatars.size, avatars.mask, avatars.proxy)
+    avatar_url(name=name, bold=False, size=64, mask="hexagon", proxy="example.com")
+    assert (avatars.bold, avatars.size, avatars.mask, avatars.proxy) == before

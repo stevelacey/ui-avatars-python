@@ -1,13 +1,13 @@
 import re
 from urllib.parse import unquote
 
-import pytest
+from pytest import raises
 
 from ui_avatars import Avatars, avatars
 
 
 def test_instance_requires_name_or_email():
-    with pytest.raises(ValueError, match="requires at least one"):
+    with raises(ValueError, match="requires at least one"):
         Avatars().build()
 
 
@@ -169,6 +169,10 @@ def test_default_host_is_none():
     assert Avatars().host is None
 
 
+def test_default_proxy_is_none():
+    assert Avatars().proxy is None
+
+
 def test_default_region_is_none():
     assert Avatars().region is None
 
@@ -189,7 +193,7 @@ def test_na_region_selects_the_ui_avatars_host(name):
 
 
 def test_unknown_region_raises(name):
-    with pytest.raises(ValueError, match="unknown region"):
+    with raises(ValueError, match="unknown region"):
         Avatars().build(name=name, region="notaregion")
 
 
@@ -223,8 +227,38 @@ def test_custom_host_takes_precedence_over_region(name):
 
 
 def test_unknown_host_raises(name):
-    with pytest.raises(ValueError, match="unknown host"):
+    with raises(ValueError, match="unknown host"):
         Avatars().build(name=name, host="notarehost")
+
+
+def test_default_wsrv_proxy_is_used(name):
+    url = Avatars().build(name=name, mask="hexagon")
+    assert url.startswith("https://wsrv.nl/?url=")
+
+
+def test_custom_proxy_without_a_scheme_defaults_to_https(name):
+    url = Avatars().build(name=name, mask="hexagon", proxy="images.example.com")
+    assert url.startswith("https://images.example.com/?url=")
+
+
+def test_custom_proxy_keeps_an_explicit_scheme(name):
+    url = Avatars().build(name=name, mask="hexagon", proxy="https://images.example.com")
+    assert url.startswith("https://images.example.com/?url=")
+
+
+def test_instance_proxy_is_used_when_wrapping(name):
+    url = Avatars(proxy="https://images.example.com").build(name=name, mask="hexagon")
+    assert url.startswith("https://images.example.com/?url=")
+
+
+def test_unknown_proxy_raises(name):
+    with raises(ValueError, match="unknown proxy"):
+        Avatars().build(name=name, mask="hexagon", proxy="notaproxy")
+
+
+def test_unknown_proxy_raises_even_when_not_wrapping(name):
+    with raises(ValueError, match="unknown proxy"):
+        Avatars().build(name=name, proxy="notaproxy")
 
 
 def test_default_source_is_gravatar():
@@ -237,12 +271,12 @@ def test_source_selects_the_photo_host(name, email):
 
 
 def test_unknown_source_raises(name, email):
-    with pytest.raises(ValueError, match="unknown source"):
+    with raises(ValueError, match="unknown source"):
         Avatars().build(name=name, email=email, source="notarealsource")
 
 
 def test_unknown_source_raises_even_without_email(name):
-    with pytest.raises(ValueError, match="unknown source"):
+    with raises(ValueError, match="unknown source"):
         Avatars().build(name=name, source="notarealsource")
 
 
@@ -270,6 +304,12 @@ def test_configure_updates_host_in_place():
     assert avatars.host == "https://avatars.example.com"
 
 
+def test_configure_updates_proxy_in_place():
+    avatars = Avatars()
+    avatars.configure(proxy="https://images.example.com")
+    assert avatars.proxy == "https://images.example.com"
+
+
 def test_configure_updates_region_in_place():
     avatars = Avatars()
     avatars.configure(region="eu")
@@ -288,6 +328,13 @@ def test_host_can_be_overridden_per_call_without_mutating_the_instance(name):
     assert url.startswith("https://avatars.example.com/api/")
     assert avatars.host is None
     assert avatars.region == "eu"
+
+
+def test_proxy_can_be_overridden_per_call_without_mutating_the_instance(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, mask="hexagon", proxy="https://images.example.com")
+    assert url.startswith("https://images.example.com/?url=")
+    assert avatars.proxy is None
 
 
 def test_region_can_be_overridden_per_call_without_mutating_the_instance(name):
@@ -318,6 +365,13 @@ def test_email_with_libravatar_defaults_to_svg(name, email):
     assert url.endswith("%2Fsvg")
 
 
+def test_email_with_rounded_defaults_to_png_even_on_libravatar(name, email):
+    url = Avatars().build(name=name, email=email, rounded=True, source="libravatar")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert url.endswith("&output=png")
+    assert "rgba" in url
+
+
 def test_no_email_defaults_to_svg_regardless_of_source(name):
     url = Avatars().build(name=name, source="libravatar")
     assert url.endswith("/svg")
@@ -336,16 +390,21 @@ def test_format_can_force_png_on_libravatar(name, email):
 def test_format_can_force_png_without_an_email(name):
     url = Avatars().build(name=name, format="png")
     assert url.endswith("/png")
+    assert "wsrv.nl" not in url
 
 
-def test_unknown_format_raises(name, email):
-    with pytest.raises(ValueError, match="unknown format"):
-        Avatars().build(name=name, email=email, format="webp")
+def test_non_standard_format_is_proxied_through_wsrv(name):
+    url = Avatars().build(name=name, format="webp")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert url.endswith("&mask=&output=webp")
+    assert "ui-avatars.com" in unquote(url)
 
 
-def test_unknown_format_raises_even_without_email(name):
-    with pytest.raises(ValueError, match="unknown format"):
-        Avatars().build(name=name, format="webp")
+def test_non_standard_format_with_email_is_proxied_through_wsrv(name, email):
+    url = Avatars().build(name=name, email=email, format="webp")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert url.endswith("&mask=&output=webp")
+    assert "gravatar.com" in unquote(url)
 
 
 def test_configure_updates_format_in_place():
@@ -388,6 +447,126 @@ def test_custom_ui_avatars_options_appear_in_the_url(name):
         uppercase=False,
     )
     assert avatars.build(name=name).endswith("/1/0.5/1/0/0/svg")
+
+
+def test_default_mask_is_none():
+    assert Avatars().mask is None
+
+
+def test_rounded_without_email_is_not_proxied_through_wsrv(name):
+    url = Avatars().build(name=name, rounded=True)
+    assert url.startswith("https://ui-avatars.com/api/")
+    assert "wsrv.nl" not in url
+    assert url.endswith("/2/0.4/1/1/1/svg")
+
+
+def test_email_without_rounded_or_mask_is_not_proxied_through_wsrv(name, email):
+    url = Avatars().build(name=name, email=email)
+    assert url.startswith("https://www.gravatar.com/avatar/")
+    assert "wsrv.nl" not in url
+
+
+def test_email_with_rounded_is_proxied_through_wsrv(name, email):
+    url = Avatars().build(name=name, email=email, rounded=True)
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&w=128&h=128" in url
+    assert "&mask=circle" in url
+    assert url.endswith("&output=png")
+    assert "gravatar.com" in unquote(url)
+
+
+def test_mask_is_proxied_through_wsrv_even_without_email(name):
+    url = Avatars().build(name=name, mask="hexagon")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=hexagon" in url
+    assert url.endswith("&output=svg")
+    assert "ui-avatars.com" in unquote(url)
+
+
+def test_mask_with_email_is_proxied_through_wsrv(name, email):
+    url = Avatars().build(name=name, email=email, mask="hexagon")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=hexagon" in url
+    assert url.endswith("&output=png")
+    assert "gravatar.com" in unquote(url)
+
+
+def test_custom_mask_is_passed_through_to_wsrv(name):
+    url = Avatars().build(name=name, mask="hexagon")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=hexagon" in url
+
+
+def test_explicit_mask_overrides_the_rounded_circle_default(name, email):
+    url = Avatars().build(name=name, email=email, rounded=True, mask="hexagon")
+    assert "&mask=hexagon" in url
+    assert "&mask=circle" not in url
+
+
+def test_wsrv_proxy_uses_the_requested_size(name, email):
+    url = Avatars(size=256).build(name=name, email=email, rounded=True)
+    assert "&w=256&h=256" in url
+    assert "s=256" in unquote(url)
+
+
+def test_wsrv_proxy_uses_the_requested_format(name, email):
+    url = Avatars().build(name=name, email=email, rounded=True, format="svg")
+    assert url.endswith("&output=svg")
+
+
+def test_rounded_email_proxy_works_with_libravatar(name, email):
+    url = Avatars().build(name=name, email=email, rounded=True, source="libravatar")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "libravatar.org" in unquote(url)
+    assert "&mask=circle" in url
+    assert url.endswith("&output=png")
+
+
+def test_instance_mask_wraps_through_wsrv(name):
+    url = Avatars(mask="hexagon").build(name=name)
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=hexagon" in url
+
+
+def test_instance_rounded_wraps_email_urls_through_wsrv(name, email):
+    url = Avatars(rounded=True).build(name=name, email=email)
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=circle" in url
+
+
+def test_configure_mask_enables_the_proxy(name):
+    avatars = Avatars().configure(mask="hexagon")
+    url = avatars.build(name=name)
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=hexagon" in url
+
+
+def test_configure_rounded_enables_the_email_proxy(name, email):
+    avatars = Avatars().configure(rounded=True)
+    url = avatars.build(name=name, email=email)
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=circle" in url
+
+
+def test_configure_updates_mask_in_place():
+    avatars = Avatars()
+    avatars.configure(mask="hexagon")
+    assert avatars.mask == "hexagon"
+
+
+def test_mask_can_be_overridden_per_call_without_mutating_the_instance(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, mask="hexagon")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert avatars.mask is None
+
+
+def test_rounded_can_be_disabled_per_call_without_mutating_the_instance(name, email):
+    avatars = Avatars(rounded=True)
+    url = avatars.build(name=name, email=email, rounded=False)
+    assert url.startswith("https://www.gravatar.com/avatar/")
+    assert "wsrv.nl" not in url
+    assert avatars.rounded is True
 
 
 def test_default_alpha_is_0_2():
@@ -451,6 +630,7 @@ def test_configure_leaves_ui_avatars_options_unchanged_when_omitted(name):
     avatars = Avatars(rounded=True)
     avatars.configure(size=256)
     assert avatars.rounded is True
+    assert avatars.build(name=name).endswith("/2/0.4/1/1/1/svg")
 
 
 def test_configure_updates_alpha_in_place():
@@ -527,5 +707,11 @@ def test_shared_avatars_instance_has_default_configuration():
     assert isinstance(avatars, Avatars)
     assert avatars.colors == Avatars.COLORS
     assert avatars.host is None
+    assert avatars.proxy is None
     assert avatars.region is None
     assert avatars.size == 128
+    assert avatars.rounded is False
+    assert avatars.mask is None
+    assert avatars.source == Avatars.GRAVATAR
+    assert avatars.format is None
+    assert avatars.alpha == 0.2

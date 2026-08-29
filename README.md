@@ -80,6 +80,12 @@ avatar_url(name="Ada Lovelace", region="eu")
 
 avatar_url(name="Ada Lovelace", host="avatars.example.com")
 # use a custom or self-hosted UI Avatars endpoint
+
+avatar_url(name="Ada Lovelace", mask="hexagon")
+# crop the image to a hexagon via wsrv.nl
+
+avatar_url(name="Ada Lovelace", format="webp", proxy="images.example.com")
+# use a self-hosted wsrv.nl instance instead of the public api
 ```
 
 ## Configuration

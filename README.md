@@ -72,7 +72,7 @@ avatar_url(name="Ada Lovelace", email="ada@example.com", format="png")
 avatar_url(name="Ada Lovelace", email="ada@example.com", source="libravatar")
 # look up the photo on Libravatar instead of Gravatar
 
-avatar_url(name="Ada Lovelace", email="ada@example.com", source="cdn.libravatar.org")
+avatar_url(name="Ada Lovelace", email="ada@example.com", source="secure.gravatar.com")
 # use a custom Gravatar-compatible photo source
 
 avatar_url(name="Ada Lovelace", region="eu")

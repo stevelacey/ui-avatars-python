@@ -143,7 +143,7 @@ class Avatars:
             text_color = "".join(c * 2 for c in text_color)
 
         if format is None:
-            format = "svg" if not email or source == self.LIBRAVATAR else "png"
+            format = "png" if email and "gravatar.com" in origin else "svg"
 
         if format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))

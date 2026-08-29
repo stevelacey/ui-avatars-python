@@ -1,10 +1,10 @@
 # ui-avatars
 
 [![PyPI](https://img.shields.io/pypi/v/ui-avatars.svg?style=flat-square)](https://pypi.org/project/ui-avatars/)
-[![CI](https://img.shields.io/github/actions/workflow/status/stevelacey/ui-avatars/ci.yml?branch=main&style=flat-square)](https://github.com/stevelacey/ui-avatars/actions/workflows/ci.yml?query=branch:main)
-[![Coverage](https://img.shields.io/codecov/c/github/stevelacey/ui-avatars?style=flat-square)](https://codecov.io/gh/stevelacey/ui-avatars)
+[![CI](https://img.shields.io/github/actions/workflow/status/stevelacey/ui-avatars-python/ci.yml?branch=main&style=flat-square)](https://github.com/stevelacey/ui-avatars-python/actions/workflows/ci.yml?query=branch:main)
+[![Coverage](https://img.shields.io/codecov/c/github/stevelacey/ui-avatars-python?style=flat-square)](https://codecov.io/gh/stevelacey/ui-avatars-python)
 [![Downloads](https://img.shields.io/pypi/dm/ui-avatars.svg?style=flat-square)](https://pypi.org/project/ui-avatars/)
-[![License](https://img.shields.io/github/license/stevelacey/ui-avatars?style=flat-square)](LICENSE.md)
+[![License](https://img.shields.io/github/license/stevelacey/ui-avatars-python?style=flat-square)](LICENSE.md)
 
 Deterministic avatar URLs for light and dark designs:
 [Gravatar](https://gravatar.com) or [Libravatar](https://libravatar.org) photos falling

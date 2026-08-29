@@ -22,9 +22,9 @@ classifiers = [
 dependencies = ["tailwind_colors>=1.4.1,<2.0.0"]
 
 [project.urls]
-Homepage = "https://github.com/stevelacey/ui-avatars"
-Repository = "https://github.com/stevelacey/ui-avatars"
-Issues = "https://github.com/stevelacey/ui-avatars/issues"
+Homepage = "https://github.com/stevelacey/ui-avatars-python"
+Repository = "https://github.com/stevelacey/ui-avatars-python"
+Issues = "https://github.com/stevelacey/ui-avatars-python/issues"
 
 [tool.poetry]
 packages = [{ include = "ui_avatars", from = "src" }]

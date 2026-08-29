@@ -7,6 +7,16 @@ from tailwind_colors import TCH
 class Avatars:
     COLORS = list(TCH.RAINBOW_500)
 
+    DEFAULT_HOST = "https://ui-avatars.com"
+
+    REGION_EU = "eu"
+    REGION_NA = "na"
+
+    REGIONS = {
+        REGION_EU: "https://eu.ui-avatars.com",
+        REGION_NA: "https://na.ui-avatars.com",
+    }
+
     GRAVATAR = "gravatar"
     LIBRAVATAR = "libravatar"
 
@@ -25,7 +35,9 @@ class Avatars:
         font_color: str | None = None,
         font_size: float = 0.4,
         format: str | None = None,
+        host: str | None = None,
         length: int = 2,
+        region: str | None = None,
         rounded: bool = False,
         size: int = 128,
         source: str = GRAVATAR,
@@ -38,7 +50,9 @@ class Avatars:
         self.font_color = font_color
         self.font_size = font_size
         self.format = format
+        self.host = host
         self.length = length
+        self.region = region
         self.rounded = rounded
         self.size = size
         self.source = source
@@ -56,7 +70,9 @@ class Avatars:
         font_color: str | None = None,
         font_size: float | None = None,
         format: str | None = None,
+        host: str | None = None,
         length: int | None = None,
+        region: str | None = None,
         rounded: bool | None = None,
         size: int | None = None,
         source: str | None = None,
@@ -68,13 +84,13 @@ class Avatars:
         font_color = self.font_color if font_color is None else font_color
         font_size = self.font_size if font_size is None else font_size
         format = self.format if format is None else format
+        host = self.parse_url(host or self.host)
         length = self.length if length is None else length
+        region = self.region if region is None else region
         rounded = int(self.rounded if rounded is None else rounded)
         size = self.size if size is None else size
         source = self.source if source is None else source
-        origin = self.SOURCES.get(
-            source, source if "://" in source else f"https://{source}"
-        )
+        origin = self.parse_url(self.SOURCES.get(source, source))
         uppercase = int(self.uppercase if uppercase is None else uppercase)
 
         if not name and not email:
@@ -83,8 +99,16 @@ class Avatars:
         if format is not None and format not in ("png", "svg"):
             raise ValueError(f"unknown format: {format!r}")
 
-        if "." not in origin:
+        if host and "." not in host:
+            raise ValueError(f"unknown host: {host!r}")
+
+        if region and region not in self.REGIONS:
+            raise ValueError(f"unknown region: {region!r}")
+
+        if origin and "." not in origin:
             raise ValueError(f"unknown source: {source!r}")
+
+        host = host or self.REGIONS.get(region) or self.DEFAULT_HOST
 
         if not name:
             local_part = email.strip().split("@", 1)[0]
@@ -102,6 +126,7 @@ class Avatars:
                 if isinstance(palette_entry, tuple)
                 else (palette_entry, palette_entry)
             )
+
         if background is not None:
             background_color = background
         if font_color is not None:
@@ -111,6 +136,7 @@ class Avatars:
             background_color.lstrip("#"),
             text_color.lstrip("#"),
         )
+
         if len(background_color) == 3:
             background_color = "".join(c * 2 for c in background_color)
         if len(text_color) == 3:
@@ -118,6 +144,7 @@ class Avatars:
 
         if format is None:
             format = "svg" if not email or source == self.LIBRAVATAR else "png"
+
         if format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
             background_color = f"rgba({r},{g},{b},{alpha})"
@@ -126,7 +153,7 @@ class Avatars:
             background_color = f"{background_color}{alpha_suffix}"
 
         url = (
-            f"https://ui-avatars.com/api/{quote(name)}/{size}/{background_color}/{text_color}/"
+            f"{host}/api/{quote(name)}/{size}/{background_color}/{text_color}/"
             f"{length}/{font_size}/{rounded}/{bold}/{uppercase}/{format}"
         )
 
@@ -145,7 +172,9 @@ class Avatars:
         font_color: str | None = None,
         font_size: float | None = None,
         format: str | None = None,
+        host: str | None = None,
         length: int | None = None,
+        region: str | None = None,
         rounded: bool | None = None,
         size: int | None = None,
         source: str | None = None,
@@ -165,8 +194,12 @@ class Avatars:
             self.font_size = font_size
         if format is not None:
             self.format = format
+        if host is not None:
+            self.host = host
         if length is not None:
             self.length = length
+        if region is not None:
+            self.region = region
         if rounded is not None:
             self.rounded = rounded
         if size is not None:
@@ -175,7 +208,11 @@ class Avatars:
             self.source = source
         if uppercase is not None:
             self.uppercase = uppercase
+
         return self
+
+    def parse_url(self, value):
+        return f"https://{value}" if value and "://" not in value else value
 
 
 avatars = Avatars()

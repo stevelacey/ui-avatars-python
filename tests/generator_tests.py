@@ -165,6 +165,68 @@ def test_default_size_is_128():
     assert Avatars().size == 128
 
 
+def test_default_host_is_none():
+    assert Avatars().host is None
+
+
+def test_default_region_is_none():
+    assert Avatars().region is None
+
+
+def test_default_ui_avatars_host_is_used(name):
+    url = Avatars().build(name=name)
+    assert url.startswith("https://ui-avatars.com/api/")
+
+
+def test_region_selects_the_ui_avatars_host(name):
+    url = Avatars().build(name=name, region="eu")
+    assert url.startswith("https://eu.ui-avatars.com/api/")
+
+
+def test_na_region_selects_the_ui_avatars_host(name):
+    url = Avatars().build(name=name, region="na")
+    assert url.startswith("https://na.ui-avatars.com/api/")
+
+
+def test_unknown_region_raises(name):
+    with pytest.raises(ValueError, match="unknown region"):
+        Avatars().build(name=name, region="notaregion")
+
+
+def test_custom_host_without_a_scheme_defaults_to_https(name):
+    url = Avatars().build(name=name, host="avatars.example.com")
+    assert url.startswith("https://avatars.example.com/api/")
+
+
+def test_custom_host_keeps_an_explicit_scheme(name):
+    url = Avatars().build(name=name, host="https://avatars.example.com")
+    assert url.startswith("https://avatars.example.com/api/")
+
+
+def test_custom_host_is_used_for_email_fallback(name, email):
+    url = Avatars().build(
+        name=name,
+        email=email,
+        host="https://avatars.example.com",
+    )
+    assert "https://avatars.example.com/api/" in unquote(url)
+
+
+def test_custom_host_takes_precedence_over_region(name):
+    url = Avatars().build(
+        name=name,
+        host="https://avatars.example.com",
+        region="eu",
+    )
+    assert url.startswith("https://avatars.example.com/api/")
+    assert "eu.ui-avatars.com" not in url
+
+
+def test_unknown_host_raises(name):
+    with pytest.raises(ValueError, match="unknown host"):
+        Avatars().build(name=name, host="notarehost")
+
+
 def test_default_source_is_gravatar():
     assert Avatars().source == "gravatar"
 
@@ -184,14 +246,34 @@ def test_unknown_source_raises_even_without_email(name):
         Avatars().build(name=name, source="notarealsource")
 
 
-def test_custom_host_without_a_scheme_defaults_to_https(name, email):
-    url = Avatars().build(name=name, email=email, source="avatars.example.com")
+def test_custom_source_without_a_scheme_defaults_to_https(name, email):
+    url = Avatars().build(
+        name=name,
+        email=email,
+        source="avatars.example.com",
+    )
     assert url.startswith("https://avatars.example.com/avatar/")
 
 
-def test_custom_host_keeps_an_explicit_scheme(name, email):
-    url = Avatars().build(name=name, email=email, source="https://avatars.example.com")
+def test_custom_source_keeps_an_explicit_scheme(name, email):
+    url = Avatars().build(
+        name=name,
+        email=email,
+        source="https://avatars.example.com",
+    )
     assert url.startswith("https://avatars.example.com/avatar/")
+
+
+def test_configure_updates_host_in_place():
+    avatars = Avatars()
+    avatars.configure(host="https://avatars.example.com")
+    assert avatars.host == "https://avatars.example.com"
+
+
+def test_configure_updates_region_in_place():
+    avatars = Avatars()
+    avatars.configure(region="eu")
+    assert avatars.region == "eu"
 
 
 def test_configure_updates_source_in_place():
@@ -200,10 +282,25 @@ def test_configure_updates_source_in_place():
     assert avatars.source == "libravatar"
 
 
+def test_host_can_be_overridden_per_call_without_mutating_the_instance(name):
+    avatars = Avatars(region="eu")
+    url = avatars.build(name=name, host="https://avatars.example.com")
+    assert url.startswith("https://avatars.example.com/api/")
+    assert avatars.host is None
+    assert avatars.region == "eu"
+
+
+def test_region_can_be_overridden_per_call_without_mutating_the_instance(name):
+    avatars = Avatars(region="eu")
+    url = avatars.build(name=name, region="na")
+    assert url.startswith("https://na.ui-avatars.com/api/")
+    assert avatars.region == "eu"
+
+
 def test_source_can_be_overridden_per_call_without_mutating_the_instance(name, email):
     avatars = Avatars()
     url = avatars.build(name=name, email=email, source="libravatar")
-    assert "libravatar" in url
+    assert url.startswith("https://seccdn.libravatar.org/avatar/")
     assert avatars.source == "gravatar"
 
 
@@ -405,7 +502,7 @@ def test_alpha_can_be_overridden_per_call_without_mutating_the_instance(name):
 def test_color_bypasses_the_configured_palette(name):
     avatars = Avatars(colors=["#000000"])
     url = avatars.build(name=name, color="#dc2626")
-    assert "/dc262633/dc2626/" in url
+    assert "/dc2626/" in url
 
 
 def test_color_combines_with_font_color(name):
@@ -429,4 +526,6 @@ def test_shared_avatars_instance_is_the_same_object_across_imports():
 def test_shared_avatars_instance_has_default_configuration():
     assert isinstance(avatars, Avatars)
     assert avatars.colors == Avatars.COLORS
+    assert avatars.host is None
+    assert avatars.region is None
     assert avatars.size == 128

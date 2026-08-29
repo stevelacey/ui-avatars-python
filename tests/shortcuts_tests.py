@@ -133,6 +133,30 @@ def test_size_can_be_overridden_per_call(name):
     assert "/64/" in avatar_url(name=name, size=64)
 
 
+def test_host_can_be_overridden_per_call(name):
+    url = avatar_url(name=name, host="https://avatars.example.com")
+    assert url.startswith("https://avatars.example.com/api/")
+
+
+def test_host_without_a_scheme_defaults_to_https(name):
+    url = avatar_url(name=name, host="avatars.example.com")
+    assert url.startswith("https://avatars.example.com/api/")
+
+
+def test_region_can_be_overridden_per_call(name):
+    url = avatar_url(name=name, region="eu")
+    assert url.startswith("https://eu.ui-avatars.com/api/")
+
+
+def test_host_takes_precedence_over_region(name):
+    url = avatar_url(
+        name=name,
+        host="https://avatars.example.com",
+        region="eu",
+    )
+    assert url.startswith("https://avatars.example.com/api/")
+
+
 def test_source_can_be_overridden_per_call(name, email):
     url = avatar_url(name=name, email=email, source="libravatar")
     assert url.startswith("https://seccdn.libravatar.org/avatar/")

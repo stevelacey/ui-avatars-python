@@ -159,7 +159,7 @@ class Avatars:
         if format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
             background_color = f"rgba({r},{g},{b},{alpha})"
-        else:
+        elif alpha < 1:
             alpha_suffix = f"{min(255, max(0, round(alpha * 255))):02x}"
             background_color = f"{background_color}{alpha_suffix}"
 

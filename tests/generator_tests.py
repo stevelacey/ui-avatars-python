@@ -90,13 +90,13 @@ def test_tuple_color_entries_still_apply_alpha_to_the_background(name):
 def test_tuple_color_entries_can_be_made_fully_opaque_via_alpha(name):
     avatars = Avatars(colors=[("#fee2e2", "#ef4444")], alpha=1)
     url = avatars.build(name=name)
-    assert "/fee2e2ff/ef4444/" in url
+    assert "/fee2e2/ef4444/" in url
 
 
 def test_opaque_single_color_keeps_the_text_the_same_hue(name):
     avatars = Avatars(colors=["#ef4444"], alpha=1)
     url = avatars.build(name=name)
-    assert "/ef4444ff/ef4444/" in url
+    assert "/ef4444/ef4444/" in url
 
 
 def test_font_color_overrides_the_palette_derived_text_color(name):
@@ -109,7 +109,7 @@ def test_font_color_overrides_the_palette_derived_text_color(name):
 def test_font_color_overrides_regardless_of_alpha(name):
     avatars = Avatars(colors=["#ef4444"], alpha=1)
     url = avatars.build(name=name, font_color="#000")
-    assert "/ef4444ff/000000/" in url
+    assert "/ef4444/000000/" in url
 
 
 def test_configure_sets_a_persistent_font_color_override(name):
@@ -122,16 +122,16 @@ def test_configure_sets_a_persistent_font_color_override(name):
 def test_background_overrides_the_palette_derived_background(name):
     avatars = Avatars(colors=[("#fee2e2", "#ef4444")])
     url = avatars.build(name=name, background="#000", alpha=1)
-    assert "/000000ff/ef4444/" in url
+    assert "/000000/ef4444/" in url
 
 
 def test_configure_sets_a_persistent_background_override(name):
     avatars = Avatars(alpha=1).configure(background="#000000")
     ada = avatars.build(name=name)
     grace = avatars.build(name="Grace Hopper")
-    assert "/000000ff/" in ada
-    assert "/000000ff/" in grace
-    assert ada.split("/000000ff/")[1] != grace.split("/000000ff/")[1]
+    assert "/000000/" in ada
+    assert "/000000/" in grace
+    assert ada.split("/000000/")[1] != grace.split("/000000/")[1]
 
 
 def test_tuple_color_entries_apply_alpha_on_the_png_path_too(name, email):
@@ -627,7 +627,7 @@ def test_custom_alpha_changes_both_representations(name, email):
 def test_alpha_is_clamped_to_a_valid_hex_byte_range(name):
     avatars = Avatars(colors=["#000000"], alpha=2)
     url = avatars.build(name=name)
-    assert "/000000ff/" in url
+    assert "/000000/" in url
 
 
 def test_configure_updates_colors_in_place(name):

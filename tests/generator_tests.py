@@ -1,5 +1,5 @@
 import re
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from pytest import raises
 
@@ -9,6 +9,12 @@ from ui_avatars import Avatars, avatars
 def test_instance_requires_name_or_email():
     with raises(ValueError, match="requires at least one"):
         Avatars().build()
+
+
+def test_build_url_omits_none_values():
+    assert Avatars().build_url("https://example.com/", a=None, b="two words") == (
+        "https://example.com/?b=two%20words"
+    )
 
 
 def test_all_colors_are_valid_hex_triples():
@@ -473,6 +479,34 @@ def test_email_with_rounded_is_proxied_through_wsrv(name, email):
     assert "&mask=circle" in url
     assert url.endswith("&output=png")
     assert "gravatar.com" in unquote(url)
+
+
+def test_wsrv_uses_404_and_its_own_default_for_email_fallback(name, email):
+    url = Avatars().build(name=name, email=email, rounded=True)
+    query = parse_qs(urlsplit(url).query)
+    source_query = parse_qs(urlsplit(query["url"][0]).query)
+
+    assert source_query == {"s": ["128"], "d": ["404"]}
+    assert query["default"][0].startswith("https://ui-avatars.com/api/")
+
+
+def test_circle_mask_makes_the_email_fallback_rounded(name, email):
+    url = Avatars().build(name=name, email=email, mask="circle")
+    default = parse_qs(urlsplit(url).query)["default"][0]
+
+    assert default.startswith("https://ui-avatars.com/api/")
+    assert "/2/0.4/1/1/1/png" in default
+
+
+def test_wsrv_wraps_a_masked_email_fallback(name, email):
+    url = Avatars().build(name=name, email=email, mask="hexagon")
+    outer_query = parse_qs(urlsplit(url).query)
+    default = outer_query["default"][0]
+    default_query = parse_qs(urlsplit(default).query)
+
+    assert default.startswith("https://wsrv.nl/?url=")
+    assert default_query["url"][0].startswith("https://ui-avatars.com/api/")
+    assert default_query["mask"] == ["hexagon"]
 
 
 def test_mask_is_proxied_through_wsrv_even_without_email(name):

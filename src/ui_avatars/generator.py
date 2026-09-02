@@ -1,5 +1,5 @@
 import hashlib
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 from tailwind_colors import TCH
 
@@ -96,6 +96,7 @@ class Avatars:
         region = self.region if region is None else region
         rounded = int(self.rounded if rounded is None else rounded)
         mask = mask or self.mask or email and rounded and "circle" or ""
+        rounded = int(rounded or mask == "circle")
         proxy = self.parse_hostname(proxy or self.proxy)
         size = self.size if size is None else size
         source = self.source if source is None else source
@@ -162,16 +163,37 @@ class Avatars:
             alpha_suffix = f"{min(255, max(0, round(alpha * 255))):02x}"
             background_color = f"{background_color}{alpha_suffix}"
 
-        url = (
+        url = default = (
             f"{host}/api/{quote(name)}/{size}/{background_color}/{text_color}/"
             f"{length}/{font_size}/{rounded}/{bold}/{uppercase}/{format}"
         )
 
         if email:
-            url = f"{origin}/avatar/{digest}?s={size}&d={quote(url, safe='')}"
+            url = self.build_url(f"{origin}/avatar/{digest}", s=size, d=default)
 
         if email and rounded or format not in ("png", "svg") or mask:
-            url = f"{proxy}/?url={quote(url, safe='')}&w={size}&h={size}&mask={mask}&output={format}"
+            if email and (format not in ("png", "svg") or mask and mask != "circle"):
+                default = self.build_url(
+                    f"{proxy}/",
+                    url=default,
+                    w=size,
+                    h=size,
+                    mask=mask,
+                    output=format,
+                )
+            url = self.build_url(
+                f"{proxy}/",
+                url=(
+                    self.build_url(f"{origin}/avatar/{digest}", s=size, d=404)
+                    if email
+                    else url
+                ),
+                default=default if email else None,
+                w=size,
+                h=size,
+                mask=mask,
+                output=format,
+            )
 
         return url
 
@@ -230,7 +252,11 @@ class Avatars:
 
         return self
 
-    def parse_hostname(self, value):
+    def build_url(self, base: str, **params: str | int | None) -> str:
+        params = {key: value for key, value in params.items() if value is not None}
+        return f"{base}?{urlencode(params, quote_via=quote)}"
+
+    def parse_hostname(self, value: str) -> str:
         return f"https://{value}" if value and "://" not in value else value
 
 

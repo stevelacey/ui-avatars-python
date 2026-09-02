@@ -27,7 +27,7 @@ def test_fresh_default_configuration_matches_the_shortcut(name, email):
 
 def test_without_email_is_direct_ui_avatars_url(name):
     url = avatar_url(name=name)
-    assert url.startswith("https://ui-avatars.com/api/Ada%20Lovelace/")
+    assert url.startswith("https://ui-avatars.com/api/AL/")
     assert "gravatar" not in url
 
 
@@ -47,12 +47,12 @@ def test_with_email_wraps_in_gravatar(name, email):
 
 def test_without_name_derives_initials_from_email(email):
     url = avatar_url(email=email)
-    assert "%2Fad%2F" in url
+    assert "%2FAD%2F" in url
 
 
 def test_derived_initials_skip_non_letters_in_the_local_part():
     url = avatar_url(email="42.john@example.com")
-    assert "%2Fjo%2F" in url
+    assert "%2FJO%2F" in url
 
 
 def test_derived_initials_fall_back_to_raw_characters_when_no_letters_exist():
@@ -104,10 +104,19 @@ def test_email_is_case_and_whitespace_insensitive_for_the_gravatar_hash():
     assert gravatar_digest(padded) == gravatar_digest(plain)
 
 
-def test_name_is_url_encoded():
+def test_name_is_replaced_with_its_initials():
     url = avatar_url(name="José García")
-    assert "é" not in url
-    assert "%20" in url or "+" in url
+    assert "José" not in url
+    assert "García" not in url
+    assert "/JG/" in url
+
+
+def test_uppercase_option_controls_generated_initials():
+    assert "/jd/" in avatar_url(name="john doe", uppercase=False)
+
+
+def test_png_output_removes_special_characters_from_generated_initials():
+    assert "/JA/" in avatar_url(name="John Doe (Anderson)", format="png")
 
 
 def test_svg_background_carries_alpha_suffix_on_hex_color(name):

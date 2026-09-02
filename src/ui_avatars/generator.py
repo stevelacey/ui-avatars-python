@@ -3,6 +3,8 @@ from urllib.parse import quote, urlencode
 
 from tailwind_colors import TCH
 
+from ui_avatars.initials import generate_initials
+
 
 class Avatars:
     COLORS = list(TCH.RAINBOW_500)
@@ -163,8 +165,9 @@ class Avatars:
             alpha_suffix = f"{min(255, max(0, round(alpha * 255))):02x}"
             background_color = f"{background_color}{alpha_suffix}"
 
+        initials = generate_initials(name, length, uppercase=bool(uppercase))
         url = default = (
-            f"{host}/api/{quote(name)}/{size}/{background_color}/{text_color}/"
+            f"{host}/api/{quote(initials)}/{size}/{background_color}/{text_color}/"
             f"{length}/{font_size}/{rounded}/{bold}/{uppercase}/{format}"
         )
 
@@ -256,7 +259,7 @@ class Avatars:
         params = {key: value for key, value in params.items() if value is not None}
         return f"{base}?{urlencode(params, quote_via=quote)}"
 
-    def parse_hostname(self, value: str) -> str:
+    def parse_hostname(self, value: str | None) -> str | None:
         return f"https://{value}" if value and "://" not in value else value
 
 

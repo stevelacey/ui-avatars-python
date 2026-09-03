@@ -174,8 +174,12 @@ class Avatars:
         if email:
             url = self.build_url(f"{origin}/avatar/{digest}", s=size, d=default)
 
-        if email and rounded or format not in ("png", "svg") or mask:
-            if email and (format not in ("png", "svg") or mask and mask != "circle"):
+        unsupported_default = "libravatar.org" in source and host != self.DEFAULT_HOST
+        unsupported_format = format not in ("png", "svg")
+        unsupported_mask = mask and mask != "circle"
+
+        if email and rounded or mask or unsupported_default or unsupported_format:
+            if email and unsupported_format or email and unsupported_mask:
                 default = self.build_url(
                     f"{proxy}/",
                     url=default,

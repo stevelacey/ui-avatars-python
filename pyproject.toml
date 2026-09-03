@@ -1,6 +1,6 @@
 [project]
 name = "ui-avatars"
-version = "1.2.7"
+version = "1.2.8"
 description = "Deterministic avatar URLs: Gravatar photos with a colorful initials fallback."
 authors = [{ name = "Steve Lacey", email = "steve@steve.ly" }]
 license = "MIT"

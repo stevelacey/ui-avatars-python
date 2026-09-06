@@ -1,4 +1,5 @@
-import hashlib
+from hashlib import md5
+from typing import Literal
 from urllib.parse import quote, urlencode
 
 from tailwind_colors import TCH
@@ -9,16 +10,8 @@ from ui_avatars.initials import generate_initials
 class Avatars:
     COLORS = list(TCH.RAINBOW_500)
 
-    DEFAULT_HOST = "https://ui-avatars.com"
-    DEFAULT_PROXY = "https://wsrv.nl"
-
-    REGION_EU = "eu"
-    REGION_NA = "na"
-
-    REGIONS = {
-        REGION_EU: "https://eu.ui-avatars.com",
-        REGION_NA: "https://na.ui-avatars.com",
-    }
+    HOST = "https://ui-avatars.com"
+    PROXY = "https://wsrv.nl"
 
     GRAVATAR = "gravatar"
     LIBRAVATAR = "libravatar"
@@ -42,7 +35,7 @@ class Avatars:
         length: int = 2,
         mask: str | None = None,
         proxy: str | None = None,
-        region: str | None = None,
+        region: Literal["eu", "na"] | None = None,
         rounded: bool = False,
         size: int = 128,
         source: str = GRAVATAR,
@@ -81,7 +74,7 @@ class Avatars:
         length: int | None = None,
         mask: str | None = None,
         proxy: str | None = None,
-        region: str | None = None,
+        region: Literal["eu", "na"] | None = None,
         rounded: bool | None = None,
         size: int | None = None,
         source: str | None = None,
@@ -114,22 +107,21 @@ class Avatars:
         if proxy and "." not in proxy:
             raise ValueError(f"unknown proxy: {proxy!r}")
 
-        if region and region not in self.REGIONS:
+        if region and region not in ("eu", "na"):
             raise ValueError(f"unknown region: {region!r}")
 
         if origin and "." not in origin:
             raise ValueError(f"unknown source: {source!r}")
 
-        host = host or self.REGIONS.get(region) or self.DEFAULT_HOST
-        proxy = proxy or self.DEFAULT_PROXY
+        host = host or region and self.HOST.replace("//", f"//{region}.") or self.HOST
+        proxy = proxy or self.PROXY
 
         if not name:
             local_part = email.strip().split("@", 1)[0]
             name = "".join(c for c in local_part if c.isalpha())[:2] or local_part[:2]
 
-        digest = hashlib.md5(
-            (email or name).strip().lower().encode(), usedforsecurity=False
-        ).hexdigest()
+        identity = (email or name).strip().lower().encode()
+        digest = md5(identity, usedforsecurity=False).hexdigest()
 
         background_color, text_color = color, color
         if color is None:
@@ -174,32 +166,21 @@ class Avatars:
         if email:
             url = self.build_url(f"{origin}/avatar/{digest}", s=size, d=default)
 
-        unsupported_default = host != self.DEFAULT_HOST and "libravatar.org" in origin
-        unsupported_format = format not in ("png", "svg")
-        unsupported_mask = mask is not None and mask != "circle"
+        supported_default = "libravatar.org" not in origin or "ui-avatars.com" in host
+        supported_format = format in ("png", "svg")
+        supported_mask = mask is None or mask == "circle"
 
-        if email and rounded or mask or unsupported_default or unsupported_format:
-            if email and unsupported_format or email and unsupported_mask:
-                default = self.build_url(
-                    f"{proxy}/",
-                    url=default,
-                    w=size,
-                    h=size,
-                    mask=mask,
-                    output=format,
-                )
+        if email and rounded or mask or not supported_default or not supported_format:
+            params = {"w": size, "h": size, "mask": mask, "output": format}
+
+            if not supported_format or not supported_mask:
+                default = self.build_url(f"{proxy}/", url=default, **params)
+
             url = self.build_url(
                 f"{proxy}/",
-                url=(
-                    self.build_url(f"{origin}/avatar/{digest}", s=size, d=404)
-                    if email or unsupported_default
-                    else url
-                ),
-                default=default if email or unsupported_default else None,
-                w=size,
-                h=size,
-                mask=mask,
-                output=format,
+                url=self.build_url(f"{origin}/avatar/{digest}", s=size, d=404),
+                default=default,
+                **params,
             )
 
         return url
@@ -218,7 +199,7 @@ class Avatars:
         length: int | None = None,
         mask: str | None = None,
         proxy: str | None = None,
-        region: str | None = None,
+        region: Literal["eu", "na"] | None = None,
         rounded: bool | None = None,
         size: int | None = None,
         source: str | None = None,

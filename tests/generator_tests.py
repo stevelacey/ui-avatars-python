@@ -513,7 +513,7 @@ def test_mask_is_proxied_through_wsrv_even_without_email(name):
     url = Avatars().build(name=name, mask="hexagon")
     assert url.startswith("https://wsrv.nl/?url=")
     assert "&mask=hexagon" in url
-    assert url.endswith("&output=svg")
+    assert url.endswith("&output=png")
     assert "ui-avatars.com" in unquote(url)
 
 
@@ -544,8 +544,8 @@ def test_wsrv_proxy_uses_the_requested_size(name, email):
 
 
 def test_wsrv_proxy_uses_the_requested_format(name, email):
-    url = Avatars().build(name=name, email=email, rounded=True, format="svg")
-    assert url.endswith("&output=svg")
+    url = Avatars().build(name=name, email=email, rounded=True, format="jpg")
+    assert url.endswith("&output=jpg")
 
 
 def test_rounded_email_proxy_works_with_libravatar(name, email):

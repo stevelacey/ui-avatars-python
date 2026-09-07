@@ -114,6 +114,7 @@ class Avatars:
             raise ValueError(f"unknown source: {source!r}")
 
         host = host or region and self.HOST.replace("//", f"//{region}.") or self.HOST
+        output = format or "png"
         proxy = proxy or self.PROXY
 
         if not name:
@@ -147,7 +148,7 @@ class Avatars:
         if len(text_color) == 3:
             text_color = "".join(c * 2 for c in text_color)
 
-        if format is None:
+        if format not in ("png", "svg"):
             format = "png" if email and ("gravatar.com" in origin or rounded) else "svg"
 
         if format == "png":
@@ -167,11 +168,11 @@ class Avatars:
             url = self.build_url(f"{origin}/avatar/{digest}", s=size, d=default)
 
         supported_default = "libravatar.org" not in origin or "ui-avatars.com" in host
-        supported_format = format in ("png", "svg")
+        supported_format = output in ("png", "svg")
         supported_mask = mask is None or mask == "circle"
 
         if email and rounded or mask or not supported_default or not supported_format:
-            params = {"w": size, "h": size, "mask": mask, "output": format}
+            params = {"w": size, "h": size, "mask": mask, "output": output}
 
             if not supported_format or not supported_mask:
                 default = self.build_url(f"{proxy}/", url=default, **params)

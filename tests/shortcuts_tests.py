@@ -217,7 +217,7 @@ def test_mask_is_proxied_through_wsrv(name):
     url = avatar_url(name=name, mask="hexagon")
     assert url.startswith("https://wsrv.nl/?url=")
     assert "&mask=hexagon" in url
-    assert url.endswith("&output=svg")
+    assert url.endswith("&output=png")
 
 
 def test_alpha_can_be_overridden_per_call(name, restore_defaults):

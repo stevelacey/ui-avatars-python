@@ -55,74 +55,83 @@ avatar_url(email="ada@example.com")
 # initials from the first two letters of the email
 
 avatar_url(name="Ada Lovelace", alpha=0.75, size=256, rounded=True)
-# alpha, size, and ui-avatars.com rendering options as one-off overrides
+# pass any of the options as one-off overrides
 
-avatar_url(name="Ada Lovelace", color="#dc2626")
-# pick a specific color, skipping the palette
-
-avatar_url(name="Ada Lovelace", alpha=1, background="#000")
-# pin the background, let the text color rotate with the palette
-
-avatar_url(name="Ada Lovelace", font_color="#fff")
-# pin the text color, let the background rotate with the palette
-
-avatar_url(name="Ada Lovelace", email="ada@example.com", format="png")
-# force png or svg, note Gravatar errors for svg default images
+avatar_url(name="Ada Lovelace", mask="hexagon", format="webp")
+# crop the image to a hexagon and serve webp via wsrv.nl
 
 avatar_url(name="Ada Lovelace", email="ada@example.com", source="libravatar")
 # look up the photo on Libravatar instead of Gravatar
 
-avatar_url(name="Ada Lovelace", email="ada@example.com", source="secure.gravatar.com")
-# use a custom Gravatar-compatible photo source
-
-avatar_url(name="Ada Lovelace", region="eu")
-# use the EU ui-avatars.com endpoint for generated initials
-
-avatar_url(name="Ada Lovelace", host="avatars.example.com")
-# use a custom or self-hosted UI Avatars endpoint
-
-avatar_url(name="Ada Lovelace", mask="hexagon")
-# crop the image to a hexagon via wsrv.nl
-
-avatar_url(name="Ada Lovelace", format="webp", proxy="images.example.com")
-# use a self-hosted wsrv.nl instance instead of the public api
+avatar_url(email="ada@example.com", host="example.com", source="secure.gravatar.com")
+# override hostnames to use custom/self-hosted servers
 ```
+
+## Options
+
+| Name | Default | Description |
+| :-- | :-- | :-- |
+| `alpha` | `0.2` | Background opacity (`0` to `1`) |
+| `background` | | Pin the background color |
+| `bold` | `True` | Bold the initials |
+| `colors` | `RAINBOW_500` | List of hex values or `(background, text)` tuples |
+| `font_color` | | Pin the text color |
+| `font_size` | `0.4` | Size of the initials (`0.1` to `1`) |
+| `format` | | Image format, e.g. `png`, `svg`, and other [formats](https://wsrv.nl/docs/format) |
+| `host` | `ui-avatars.com` | User initials avatars host |
+| `length` | `2` | Number of initials |
+| `mask` | | Shape mask, e.g. `hexagon`, `pentagon`, `square`, and other [masks](https://wsrv.nl/docs/mask) |
+| `proxy` | `wsrv.nl` | Proxy for masks, rounding, and extra formats |
+| `region` | | Service region, e.g. `eu` or `na` (ignored if `host` is set) |
+| `rounded` | `False` | Round the image (ignored if `mask` is set) |
+| `size` | `128` | Image size in pixels |
+| `source` | `gravatar` | Photo source, e.g. `gravatar`, `libravatar`, or any compatible host |
+| `uppercase` | `True` | Uppercase the initials |
 
 ## Configuration
 
-Reconfigure the shared `avatars` instance once, at startup, to change the palette for
-every call:
+Configure the shared `avatars` instance that `avatar_url()` uses, or construct your own:
 
 ```python
-from ui_avatars import avatars
+from ui_avatars import avatar_url, avatars, Avatars
 
 avatars.configure(colors=["#1d4ed8", "#b91c1c"], size=256, rounded=True)
+avatar_url(name="Ada Lovelace", email="ada@example.com")
+
+my_avatars = Avatars(colors=["#1d4ed8", "#b91c1c"], size=256, rounded=True)
+my_avatars.build(name="Ada Lovelace", email="ada@example.com")
 ```
 
-Or build your own instance instead:
+## Colors
 
-```python
-from ui_avatars import Avatars
-
-avatars = Avatars(colors=["#1d4ed8", "#b91c1c"], size=256)
-avatars.build(name="Ada Lovelace", email="ada@example.com")
-```
-
-The default palette is [`tailwind_colors`](https://pypi.org/project/tailwind_colors/)'s
-`RAINBOW_500`. You can swap the whole palette like so:
+The default color palette is [`tailwind_colors`](https://pypi.org/project/tailwind_colors/) `RAINBOW_500`.
+Swap it for another scale:
 
 ```python
 from tailwind_colors import TCH
 
 avatars.configure(colors=TCH.RAINBOW_300)
+# or make up your own color palette
+avatars.configure(colors=["#f00", "#0f0", "#00f"])
 ```
 
-For an independent background/text color instead of one tinted from the other, use a
-`(background, text)` tuple as a `colors` entry — `alpha` still applies to whichever
-background results:
+Pair colors manually with `(background, text)` tuples.
+Set `alpha=1` for solid backgrounds:
 
 ```python
-avatars.configure(colors=[("#fee2e2", "#ef4444"), ("#ffedd5", "#f97316")])
+avatars.configure(alpha=1, colors=[("#f00", "#fff"), ("#000", "#00f")])
+```
+
+To override the palette and force a specific color, pass the `color` argument:
+
+```python
+avatar_url(name="Ada Lovelace", email="ada@example.com", color="#f00")
+```
+
+To pin the background color, text color, or both, pass `background` and `font_color`:
+
+```python
+avatar_url(name="Ada Lovelace", alpha=1, background="#f00", font_color="#000")
 ```
 
 ## Development
@@ -130,7 +139,7 @@ avatars.configure(colors=[("#fee2e2", "#ef4444"), ("#ffedd5", "#f97316")])
 ```bash
 poetry install
 poetry run pytest
-poetry run ruff check .
+poetry run ruff check --fix
 ```
 
 ## License

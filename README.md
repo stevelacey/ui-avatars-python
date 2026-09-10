@@ -70,7 +70,19 @@ avatar_url(email="ada@example.com", host="example.com", source="secure.gravatar.
 # override hostnames to use custom/self-hosted servers
 ```
 
+## Arguments
+
+At least one of `name` or `email` is required.
+
+| Name | Description |
+| :-- | :-- |
+| `name` | Name used to generate initials |
+| `email` | Email address used to look up a photo via Gravatar or Libravatar |
+| `image` | Image URL or file object with a `.url` attribute (e.g. Django `FieldFile`) |
+
 ## Options
+
+Options can be configured globally or overridden per call.
 
 | Name | Default | Description |
 | :-- | :-- | :-- |
@@ -82,7 +94,6 @@ avatar_url(email="ada@example.com", host="example.com", source="secure.gravatar.
 | `font_size` | `0.4` | Size of the initials (`0.1` to `1`) |
 | `format` | | Image format, e.g. `png`, `svg`, and other [formats](https://wsrv.nl/docs/format) |
 | `host` | `ui-avatars.com` | User initials avatars host |
-| `image` | | Image URL or file object with a `.url` attribute (e.g. Django `FieldFile`) |
 | `length` | `2` | Number of initials |
 | `mask` | | Shape mask, e.g. `hexagon`, `pentagon`, `square`, and other [masks](https://wsrv.nl/docs/mask) |
 | `proxy` | `wsrv.nl` | Proxy for masks, rounding, and extra formats |

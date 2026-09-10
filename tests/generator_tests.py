@@ -428,19 +428,11 @@ def test_format_can_be_overridden_per_call_without_mutating_the_instance(name):
 
 def test_default_ui_avatars_options_match_the_original_hardcoded_values(name):
     avatars = Avatars()
-    assert (
-        avatars.length,
-        avatars.font_size,
-        avatars.rounded,
-        avatars.bold,
-        avatars.uppercase,
-    ) == (
-        2,
-        0.4,
-        False,
-        True,
-        True,
-    )
+    assert avatars.length == 2
+    assert avatars.font_size == 0.4
+    assert avatars.rounded is False
+    assert avatars.bold is True
+    assert avatars.uppercase is True
     assert avatars.build(name=name).endswith("/2/0.4/0/1/1/svg")
 
 
@@ -731,6 +723,26 @@ def test_color_does_not_mutate_the_instance(name):
     assert avatars.colors == Avatars.COLORS
 
 
+def test_random_color_uses_auto_text_color(name):
+    url = Avatars().build(name=name, color="random")
+    assert "/random/auto/" in url
+
+
+def test_random_background_uses_auto_text_color(name):
+    url = Avatars().build(name=name, background="random")
+    assert "/random/auto/" in url
+
+
+def test_random_color_works_on_the_png_path(name, email):
+    url = unquote(Avatars().build(name=name, email=email, color="random"))
+    assert "/random/auto/" in url
+
+
+def test_random_background_works_on_the_png_path(name, email):
+    url = unquote(Avatars().build(name=name, email=email, background="random"))
+    assert "/random/auto/" in url
+
+
 def test_shared_avatars_instance_is_the_same_object_across_imports():
     from ui_avatars.generator import avatars as avatars_from_generator
 
@@ -875,5 +887,3 @@ def test_image_django_field_file_emulation_without_file(name):
     url = avatars.build(name=name, image=empty_field)
     assert url.startswith("https://ui-avatars.com/api/")
     assert "wsrv.nl" not in url
-
-

@@ -153,7 +153,9 @@ class Avatars:
         if format not in ("png", "svg"):
             format = "png" if email and ("gravatar.com" in origin or rounded) else "svg"
 
-        if format == "png":
+        if background_color == "random":
+            text_color = "auto"
+        elif format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
             background_color = f"rgba({r},{g},{b},{alpha})"
         elif alpha < 1:

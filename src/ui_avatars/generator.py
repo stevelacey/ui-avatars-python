@@ -63,6 +63,7 @@ class Avatars:
         *,
         name: str | None = None,
         email: str | None = None,
+        image: object | str | None = None,
         alpha: float | None = None,
         background: str | None = None,
         bold: bool | None = None,
@@ -87,10 +88,11 @@ class Avatars:
         font_size = self.font_size if font_size is None else font_size
         format = self.format if format is None else format
         host = self.parse_hostname(host or self.host)
+        image = getattr(image, "url", image) if image else None
         length = self.length if length is None else length
         region = self.region if region is None else region
         rounded = int(self.rounded if rounded is None else rounded)
-        mask = mask or self.mask or email and rounded and "circle" or ""
+        mask = mask or self.mask or (email or image) and rounded and "circle" or None
         rounded = int(rounded or mask == "circle")
         proxy = self.parse_hostname(proxy or self.proxy)
         size = self.size if size is None else size
@@ -170,8 +172,9 @@ class Avatars:
         supported_default = "libravatar.org" not in origin or "ui-avatars.com" in host
         supported_format = output in ("png", "svg")
         supported_mask = mask is None or mask == "circle"
+        supported_natively = supported_default and supported_format and supported_mask
 
-        if email and rounded or mask or not supported_default or not supported_format:
+        if email and mask or image or not supported_natively:
             params = {"w": size, "h": size, "mask": mask, "output": output}
 
             if not supported_format or not supported_mask:
@@ -179,8 +182,9 @@ class Avatars:
 
             url = self.build_url(
                 f"{proxy}/",
-                url=self.build_url(f"{origin}/avatar/{digest}", s=size, d=404),
+                url=image or self.build_url(f"{origin}/avatar/{digest}", s=size, d=404),
                 default=default,
+                fit="cover",
                 **params,
             )
 

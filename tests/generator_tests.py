@@ -402,14 +402,14 @@ def test_format_can_force_png_without_an_email(name):
 def test_non_standard_format_is_proxied_through_wsrv(name):
     url = Avatars().build(name=name, format="webp")
     assert url.startswith("https://wsrv.nl/?url=")
-    assert url.endswith("&mask=&output=webp")
+    assert url.endswith("&output=webp")
     assert "ui-avatars.com" in unquote(url)
 
 
 def test_non_standard_format_with_email_is_proxied_through_wsrv(name, email):
     url = Avatars().build(name=name, email=email, format="webp")
     assert url.startswith("https://wsrv.nl/?url=")
-    assert url.endswith("&mask=&output=webp")
+    assert url.endswith("&output=webp")
     assert "gravatar.com" in unquote(url)
 
 
@@ -749,3 +749,131 @@ def test_shared_avatars_instance_has_default_configuration():
     assert avatars.source == Avatars.GRAVATAR
     assert avatars.format is None
     assert avatars.alpha == 0.2
+
+
+def test_image_is_proxied_through_wsrv_with_fit_cover_and_size(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, image="https://example.com/avatar.jpg")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "https%3A%2F%2Fexample.com%2Favatar.jpg" in url
+    assert "&w=128&h=128" in url
+    assert "&fit=cover" in url
+    assert "default=https%3A%2F%2Fui-avatars.com%2Fapi%2F" in url
+
+
+def test_image_prefers_over_email_with_initials_fallback(name, email):
+    avatars = Avatars()
+    url = avatars.build(name=name, email=email, image="https://example.com/pic.png")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "https%3A%2F%2Fexample.com%2Fpic.png" in url
+    assert "gravatar.com" not in url
+    assert "default=https%3A%2F%2Fui-avatars.com%2Fapi%2F" in url
+
+
+def test_image_supports_rounded(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, image="https://example.com/pic.png", rounded=True)
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=circle" in url
+
+
+def test_image_supports_mask(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, image="https://example.com/pic.png", mask="hexagon")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&mask=hexagon" in url
+
+
+def test_image_supports_custom_size(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, image="https://example.com/pic.png", size=256)
+    assert "&w=256&h=256" in url
+
+
+def test_image_supports_custom_format(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, image="https://example.com/pic.png", format="webp")
+    assert url.endswith("&output=webp")
+
+
+def test_none_image_falls_back_to_initials(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, image=None)
+    assert url.startswith("https://ui-avatars.com/api/")
+
+
+def test_none_image_falls_back_to_email_gravatar(name, email):
+    avatars = Avatars()
+    url = avatars.build(name=name, email=email, image=None)
+    assert url.startswith("https://www.gravatar.com/avatar/")
+
+
+def test_image_empty_without_name_or_email_raises():
+    avatars = Avatars()
+    with raises(ValueError, match="requires at least one"):
+        avatars.build(image="")
+
+
+def test_image_with_url_attribute_is_supported(name):
+    class FileFieldObject:
+        url = "https://cdn.example.com/user.png"
+
+    avatars = Avatars()
+    url = avatars.build(name=name, image=FileFieldObject())
+    assert "https%3A%2F%2Fcdn.example.com%2Fuser.png" in url
+
+
+def test_image_with_none_url_attribute_falls_back(name):
+    class NoneUrlObject:
+        url = None
+
+    avatars = Avatars()
+    url = avatars.build(name=name, image=NoneUrlObject())
+    assert url.startswith("https://ui-avatars.com/api/")
+
+
+def test_image_django_field_file_emulation_with_file(name):
+    class MockDjangoFieldFile:
+        def __init__(self, path):
+            self.name = path
+
+        def __bool__(self):
+            return bool(self.name)
+
+        @property
+        def url(self):
+            if not self.name:
+                raise ValueError(
+                    "The 'avatar' attribute has no file associated with it."
+                )
+            return f"/media/{self.name}"
+
+    avatars = Avatars()
+    field = MockDjangoFieldFile("avatars/ada.png")
+    url = avatars.build(name=name, image=field)
+    assert "%2Fmedia%2Favatars%2Fada.png" in url
+
+
+def test_image_django_field_file_emulation_without_file(name):
+    class MockDjangoFieldFile:
+        def __init__(self, path):
+            self.name = path
+
+        def __bool__(self):
+            return bool(self.name)
+
+        @property
+        def url(self):
+            if not self.name:
+                raise ValueError(
+                    "The 'avatar' attribute has no file associated with it."
+                )
+            return f"/media/{self.name}"
+
+    avatars = Avatars()
+    empty_field = MockDjangoFieldFile(None)
+    url = avatars.build(name=name, image=empty_field)
+    assert url.startswith("https://ui-avatars.com/api/")
+    assert "wsrv.nl" not in url
+
+

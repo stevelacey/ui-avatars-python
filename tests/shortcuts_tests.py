@@ -16,6 +16,12 @@ def test_avatar_url_delegates_to_the_shared_avatars_instance(name, email):
     assert avatar_url(name=name, email=email) == avatars.build(name=name, email=email)
 
 
+def test_avatar_url_delegates_image_to_the_shared_avatars_instance(name, email):
+    assert avatar_url(
+        name=name, email=email, image="https://example.com/photo.jpg"
+    ) == avatars.build(name=name, email=email, image="https://example.com/photo.jpg")
+
+
 def test_reconfiguring_the_shared_instance_changes_the_shortcut(name, restore_defaults):
     restore_defaults.configure(colors=["abcdef"])
     assert "/abcdef/" in avatar_url(name=name)
@@ -260,3 +266,17 @@ def test_per_call_overrides_do_not_mutate_the_shared_avatars_instance(name):
     before = (avatars.bold, avatars.size, avatars.mask, avatars.proxy)
     avatar_url(name=name, bold=False, size=64, mask="hexagon", proxy="example.com")
     assert (avatars.bold, avatars.size, avatars.mask, avatars.proxy) == before
+
+
+def test_avatar_url_returns_wsrv_proxied_image(name):
+    url = avatar_url(name=name, image="https://example.com/avatar.jpg")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "&fit=cover" in url
+
+
+def test_avatar_url_prefers_image_over_email(name, email):
+    url = avatar_url(name=name, email=email, image="https://example.com/avatar.jpg")
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "https%3A%2F%2Fexample.com%2Favatar.jpg" in url
+    assert "gravatar.com" not in url
+    assert "default=https%3A%2F%2Fui-avatars.com%2Fapi%2F" in url

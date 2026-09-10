@@ -5,6 +5,7 @@ def avatar_url(
     *,
     name: str | None = None,
     email: str | None = None,
+    image: object | str | None = None,
     alpha: float | None = None,
     background: str | None = None,
     bold: bool | None = None,
@@ -25,6 +26,7 @@ def avatar_url(
     return avatars.build(
         name=name,
         email=email,
+        image=image,
         alpha=alpha,
         background=background,
         bold=bold,

@@ -51,6 +51,9 @@ avatar_url(name="Ada Lovelace", email="ada@example.com")
 avatar_url(name="Ada Lovelace")
 # straight ui-avatars.com URL, no Gravatar lookup
 
+avatar_url(name="Ada Lovelace", email="ada@example.com", image=user.avatar)
+# uploaded photo (e.g. Django FieldFile or URL), falling back to Gravatar or initials
+
 avatar_url(email="ada@example.com")
 # initials from the first two letters of the email
 
@@ -79,6 +82,7 @@ avatar_url(email="ada@example.com", host="example.com", source="secure.gravatar.
 | `font_size` | `0.4` | Size of the initials (`0.1` to `1`) |
 | `format` | | Image format, e.g. `png`, `svg`, and other [formats](https://wsrv.nl/docs/format) |
 | `host` | `ui-avatars.com` | User initials avatars host |
+| `image` | | Image URL or file object with a `.url` attribute (e.g. Django `FieldFile`) |
 | `length` | `2` | Number of initials |
 | `mask` | | Shape mask, e.g. `hexagon`, `pentagon`, `square`, and other [masks](https://wsrv.nl/docs/mask) |
 | `proxy` | `wsrv.nl` | Proxy for masks, rounding, and extra formats |

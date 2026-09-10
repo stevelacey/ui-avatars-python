@@ -88,7 +88,7 @@ class Avatars:
         font_size = self.font_size if font_size is None else font_size
         format = self.format if format is None else format
         host = self.parse_hostname(host or self.host)
-        image = getattr(image, "url", image) if image else None
+        image = self.parse_image(image)
         length = self.length if length is None else length
         region = self.region if region is None else region
         rounded = int(self.rounded if rounded is None else rounded)
@@ -253,6 +253,17 @@ class Avatars:
 
     def parse_hostname(self, value: str | None) -> str | None:
         return f"https://{value}" if value and "://" not in value else value
+
+    def parse_image(self, image: object | str | None) -> str | None:
+        if not image:
+            return None
+        if isinstance(image, str):
+            return image
+        url = getattr(image, "url", None)
+        if not isinstance(url, str) or not url:
+            image = getattr(image, "file", None)
+            url = getattr(image, "url", None) if image else None
+        return url if isinstance(url, str) and url else None
 
 
 avatars = Avatars()

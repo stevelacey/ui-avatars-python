@@ -78,7 +78,7 @@ At least one of `name` or `email` is required.
 | :-- | :-- |
 | `name` | Name used to generate initials |
 | `email` | Email address used to look up a photo via Gravatar or Libravatar |
-| `image` | Image URL or file object with a `.url` attribute (e.g. Django `FieldFile`) |
+| `image` | Image URL or file object |
 
 ## Options
 
@@ -147,6 +147,34 @@ To pin the background color, text color, or both, pass `background` and `font_co
 
 ```python
 avatar_url(name="Ada Lovelace", alpha=1, background="#f00", font_color="#000")
+```
+
+## Mixin
+
+```python
+from ui_avatars import AvatarMixin, Avatars
+
+class User(AvatarMixin, AbstractUser):
+    pass
+
+user.avatar_url
+```
+
+If you want to configure the instance, assign it to `avatars` on the model:
+
+```python
+class User(AvatarMixin, AbstractUser):
+    avatars = Avatars(size=64, rounded=True)
+```
+
+Override `get_avatar_name()`, `get_avatar_email()`, or `get_avatar_image()` if needed:
+
+```python
+class User(AvatarMixin, AbstractUser):
+    photo = models.ImageField(upload_to="photos", blank=True)
+
+    def get_avatar_image(self):
+        return self.photo
 ```
 
 ## Development

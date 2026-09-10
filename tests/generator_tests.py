@@ -887,3 +887,49 @@ def test_image_django_field_file_emulation_without_file(name):
     url = avatars.build(name=name, image=empty_field)
     assert url.startswith("https://ui-avatars.com/api/")
     assert "wsrv.nl" not in url
+
+
+def test_image_with_nested_file_url_is_supported(name):
+    class FieldFile:
+        url = "https://cdn.example.com/featured.png"
+
+    class RelatedImage:
+        file = FieldFile()
+
+    avatars = Avatars()
+    url = avatars.build(name=name, image=RelatedImage())
+    assert "https%3A%2F%2Fcdn.example.com%2Ffeatured.png" in url
+
+
+def test_image_prefers_url_over_nested_file_url(name):
+    class RelatedImage:
+        url = "https://cdn.example.com/preferred.png"
+        file = type("File", (), {"url": "https://cdn.example.com/nested.png"})()
+
+    avatars = Avatars()
+    url = avatars.build(name=name, image=RelatedImage())
+    assert "https%3A%2F%2Fcdn.example.com%2Fpreferred.png" in url
+    assert "nested.png" not in url
+
+
+def test_image_with_empty_nested_file_falls_back(name):
+    class EmptyFieldFile:
+        url = None
+
+        def __bool__(self):
+            return False
+
+    class RelatedImage:
+        file = EmptyFieldFile()
+
+    avatars = Avatars()
+    url = avatars.build(name=name, image=RelatedImage())
+    assert url.startswith("https://ui-avatars.com/api/")
+    assert "wsrv.nl" not in url
+
+
+def test_image_without_url_or_file_falls_back(name):
+    avatars = Avatars()
+    url = avatars.build(name=name, image=object())
+    assert url.startswith("https://ui-avatars.com/api/")
+    assert "wsrv.nl" not in url

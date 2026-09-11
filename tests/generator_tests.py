@@ -933,3 +933,57 @@ def test_image_without_url_or_file_falls_back(name):
     url = avatars.build(name=name, image=object())
     assert url.startswith("https://ui-avatars.com/api/")
     assert "wsrv.nl" not in url
+
+
+def test_default_base_is_none():
+    assert Avatars().base is None
+
+
+def test_instance_base_resolves_relative_image_url(name):
+    avatars = Avatars(base="https://example.com")
+    url = avatars.build(name=name, image="/media/avatar.jpg")
+    assert "https%3A%2F%2Fexample.com%2Fmedia%2Favatar.jpg" in url
+
+
+def test_instance_base_resolves_relative_django_field_file_url(name):
+    class MockDjangoFieldFile:
+        url = "/media/avatars/ada.png"
+
+    avatars = Avatars(base="https://example.com")
+    url = avatars.build(name=name, image=MockDjangoFieldFile())
+    assert "https%3A%2F%2Fexample.com%2Fmedia%2Favatars%2Fada.png" in url
+
+
+def test_instance_base_does_not_change_absolute_image_url(name):
+    avatars = Avatars(base="https://example.com")
+    url = avatars.build(name=name, image="https://cdn.example.com/avatar.jpg")
+    query = parse_qs(urlsplit(url).query)
+    assert query["url"][0] == "https://cdn.example.com/avatar.jpg"
+
+
+def test_base_can_be_overridden_per_call_without_mutating_the_instance(name):
+    avatars = Avatars(base="https://example.com")
+    url = avatars.build(
+        name=name,
+        image="/media/avatar.jpg",
+        base="https://cdn.example.com",
+    )
+    assert "https%3A%2F%2Fcdn.example.com%2Fmedia%2Favatar.jpg" in url
+    assert avatars.base == "https://example.com"
+
+
+def test_build_without_base_leaves_relative_image_url_unchanged(name):
+    url = Avatars().build(name=name, image="/media/avatar.jpg")
+    assert "%2Fmedia%2Favatar.jpg" in url
+
+
+def test_configure_updates_base_in_place():
+    avatars = Avatars()
+    avatars.configure(base="https://example.com")
+    assert avatars.base == "https://example.com"
+
+
+def test_configure_base_resolves_relative_image_url(name):
+    avatars = Avatars().configure(base="https://example.com")
+    url = avatars.build(name=name, image="/media/avatar.jpg")
+    assert "https%3A%2F%2Fexample.com%2Fmedia%2Favatar.jpg" in url

@@ -78,7 +78,7 @@ At least one of `name` or `email` is required.
 | :-- | :-- |
 | `name` | Name used to generate initials |
 | `email` | Email address used to look up a photo via Gravatar or Libravatar |
-| `image` | Image URL or file object |
+| `image` | Image URL or file object (supply `base` if using `FileSystemStorage`) |
 
 ## Options
 
@@ -88,6 +88,7 @@ Options can be configured globally or overridden per call.
 | :-- | :-- | :-- |
 | `alpha` | `0.2` | Background opacity (`0` to `1`) |
 | `background` | | Pin the background color |
+| `base` | | Base URL for resolving relative image URLs |
 | `bold` | `True` | Bold the initials |
 | `colors` | `RAINBOW_500` | List of hex values or `(background, text)` tuples |
 | `font_color` | | Pin the text color |
@@ -164,7 +165,16 @@ If you want to configure the instance, assign it to `avatars` on the model:
 
 ```python
 class User(AvatarMixin, AbstractUser):
-    avatars = Avatars(size=64, rounded=True)
+    avatars = Avatars(size=64, source="libravatar")
+```
+
+The `base` option is used to resolve relative image URLs, such as Django's ImageField:
+
+```python
+class User(AvatarMixin, AbstractUser):
+    profile_picture = models.ImageField(upload_to="profile_pictures", blank=True)
+
+    avatars = Avatars(base="https://example.com")
 ```
 
 Override `get_avatar_name()`, `get_avatar_email()`, or `get_avatar_image()` if needed:

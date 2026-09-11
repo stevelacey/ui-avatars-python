@@ -26,6 +26,7 @@ class Avatars:
         *,
         alpha: float = 0.2,
         background: str | None = None,
+        base: str | None = None,
         bold: bool = True,
         colors: list[str | tuple[str, str]] = COLORS,
         font_color: str | None = None,
@@ -43,6 +44,7 @@ class Avatars:
     ) -> None:
         self.alpha = alpha
         self.background = background
+        self.base = base
         self.bold = bold
         self.colors = list(colors)
         self.font_color = font_color
@@ -66,6 +68,7 @@ class Avatars:
         image: object | str | None = None,
         alpha: float | None = None,
         background: str | None = None,
+        base: str | None = None,
         bold: bool | None = None,
         color: str | None = None,
         font_color: str | None = None,
@@ -83,12 +86,13 @@ class Avatars:
     ) -> str:
         alpha = self.alpha if alpha is None else alpha
         background = self.background if background is None else background
+        base = self.base if base is None else base
         bold = int(self.bold if bold is None else bold)
         font_color = self.font_color if font_color is None else font_color
         font_size = self.font_size if font_size is None else font_size
         format = self.format if format is None else format
         host = self.parse_hostname(host or self.host)
-        image = self.parse_image(image)
+        image = self.parse_image(image, base)
         length = self.length if length is None else length
         region = self.region if region is None else region
         rounded = int(self.rounded if rounded is None else rounded)
@@ -197,6 +201,7 @@ class Avatars:
         *,
         alpha: float | None = None,
         background: str | None = None,
+        base: str | None = None,
         bold: bool | None = None,
         colors: list[str | tuple[str, str]] | None = None,
         font_color: str | None = None,
@@ -216,6 +221,8 @@ class Avatars:
             self.alpha = alpha
         if background is not None:
             self.background = background
+        if base is not None:
+            self.base = base
         if bold is not None:
             self.bold = bold
         if colors is not None:
@@ -247,23 +254,21 @@ class Avatars:
 
         return self
 
-    def build_url(self, base: str, **params: str | int | None) -> str:
+    def build_url(self, base, **params) -> str:
         params = {key: value for key, value in params.items() if value is not None}
         return f"{base}?{urlencode(params, quote_via=quote)}"
 
-    def parse_hostname(self, value: str | None) -> str | None:
+    def parse_hostname(self, value) -> str | None:
         return f"https://{value}" if value and "://" not in value else value
 
-    def parse_image(self, image: object | str | None) -> str | None:
-        if not image:
-            return None
-        if isinstance(image, str):
-            return image
-        url = getattr(image, "url", None)
+    def parse_image(self, image, base) -> str | None:
+        url = getattr(image, "url", image) if image else None
         if not isinstance(url, str) or not url:
             image = getattr(image, "file", None)
             url = getattr(image, "url", None) if image else None
-        return url if isinstance(url, str) and url else None
+        if base and isinstance(url, str) and "://" not in url:
+            return f"{base.rstrip('/')}/{url.lstrip('/')}"
+        return url
 
 
 avatars = Avatars()

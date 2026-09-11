@@ -1,6 +1,6 @@
 import hashlib
 import re
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from pytest import raises
 
@@ -280,3 +280,32 @@ def test_avatar_url_prefers_image_over_email(name, email):
     assert "https%3A%2F%2Fexample.com%2Favatar.jpg" in url
     assert "gravatar.com" not in url
     assert "default=https%3A%2F%2Fui-avatars.com%2Fapi%2F" in url
+
+
+def test_base_can_be_overridden_per_call(name):
+    url = avatar_url(
+        name=name,
+        image="/media/avatar.jpg",
+        base="https://example.com",
+    )
+    assert "https%3A%2F%2Fexample.com%2Fmedia%2Favatar.jpg" in url
+
+
+def test_base_resolves_relative_image_url(name):
+    url = avatar_url(
+        name=name,
+        image="/media/avatar.jpg",
+        base="https://example.com",
+    )
+    assert url.startswith("https://wsrv.nl/?url=")
+    assert "https%3A%2F%2Fexample.com%2Fmedia%2Favatar.jpg" in url
+
+
+def test_base_does_not_change_absolute_image_url(name):
+    url = avatar_url(
+        name=name,
+        image="https://cdn.example.com/avatar.jpg",
+        base="https://example.com",
+    )
+    query = parse_qs(urlsplit(url).query)
+    assert query["url"][0] == "https://cdn.example.com/avatar.jpg"

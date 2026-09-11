@@ -6,18 +6,26 @@ class AvatarMixin:
 
     def get_avatar_name(self) -> str:
         return (
-            (hasattr(self, "get_full_name") and self.get_full_name())
-            or getattr(self, "full_name", "")
-            or getattr(self, "name", "")
-            or f"{getattr(self, 'first_name', '') or ''} {getattr(self, 'last_name', '') or ''}".strip()
-            or getattr(self, "username", "")
-        ).replace("_", " ").strip()
+            (
+                (hasattr(self, "get_full_name") and self.get_full_name())
+                or getattr(self, "full_name", "")
+                or getattr(self, "name", "")
+                or f"{getattr(self, 'first_name', '') or ''} {getattr(self, 'last_name', '') or ''}".strip()
+                or getattr(self, "username", "")
+            )
+            .replace("_", " ")
+            .strip()
+        )
 
     def get_avatar_email(self) -> str:
         return getattr(self, "email", "") or ""
 
     def get_avatar_image(self) -> object | str | None:
-        return getattr(self, "avatar", None) or getattr(self, "image", None)
+        return (
+            getattr(self, "avatar", None)
+            or getattr(self, "profile_picture", None)
+            or getattr(self, "image", None)
+        )
 
     def get_avatar_url(self, **options) -> str:
         return self.avatars.build(

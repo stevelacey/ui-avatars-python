@@ -168,7 +168,7 @@ class User(AvatarMixin, AbstractUser):
     avatars = Avatars(size=64, source="libravatar")
 ```
 
-The `base` option is used to resolve relative image URLs, such as Django's ImageField:
+The `base` option resolves relative image URLs, such as Django's ImageField:
 
 ```python
 class User(AvatarMixin, AbstractUser):
@@ -176,6 +176,9 @@ class User(AvatarMixin, AbstractUser):
 
     avatars = Avatars(base="https://example.com")
 ```
+
+By default, the mixin uses `get_full_name()`, `full_name`, `name`, `first_name` and `last_name`,
+or `username` for initials, and `avatar`, `profile_picture`, or `image` for images, in that order.
 
 Override `get_avatar_name()`, `get_avatar_email()`, or `get_avatar_image()` if needed:
 

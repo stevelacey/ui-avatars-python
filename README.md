@@ -155,8 +155,10 @@ avatar_url(name="Ada Lovelace", alpha=1, background="#f00", font_color="#000")
 ```python
 from ui_avatars import AvatarMixin, Avatars
 
+
 class User(AvatarMixin, AbstractUser):
     pass
+
 
 user.avatar_url
 ```

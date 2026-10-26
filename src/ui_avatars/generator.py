@@ -130,24 +130,14 @@ class Avatars:
         identity = (email or name).strip().lower().encode()
         digest = md5(identity, usedforsecurity=False).hexdigest()
 
-        background_color, text_color = color, color
-        if color is None:
-            palette_entry = self.colors[int(digest[:8], 16) % len(self.colors)]
-            background_color, text_color = (
-                palette_entry
-                if isinstance(palette_entry, tuple)
-                else (palette_entry, palette_entry)
-            )
-
-        if background is not None:
-            background_color = background
-        if font_color is not None:
-            text_color = font_color
-
-        background_color, text_color = (
-            background_color.lstrip("#"),
-            text_color.lstrip("#"),
+        palette_item = self.colors[int(digest[:8], 16) % len(self.colors)]
+        palette_pair = (
+            palette_item
+            if isinstance(palette_item, tuple)
+            else (palette_item, palette_item)
         )
+        background_color = (background or color or palette_pair[0]).lstrip("#")
+        text_color = (font_color or color or palette_pair[1]).lstrip("#")
 
         if len(background_color) == 3:
             background_color = "".join(c * 2 for c in background_color)

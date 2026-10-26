@@ -1,3 +1,4 @@
+import hashlib
 import re
 from urllib.parse import parse_qs, unquote, urlsplit
 
@@ -274,6 +275,47 @@ def test_default_source_is_gravatar():
 def test_source_selects_the_photo_host(name, email):
     url = Avatars().build(name=name, email=email, source="libravatar")
     assert url.startswith("https://seccdn.libravatar.org/avatar/")
+
+
+def test_default_hash_is_sha256():
+    assert Avatars().hash == "sha256"
+
+
+def test_instance_hash_is_used_for_photo_lookups(name, email):
+    digest = hashlib.md5(email.encode(), usedforsecurity=False).hexdigest()
+    assert f"/avatar/{digest}?" in Avatars(hash="md5").build(name=name, email=email)
+
+
+def test_configure_sets_a_persistent_hash(name, email):
+    digest = hashlib.md5(email.encode(), usedforsecurity=False).hexdigest()
+    url = Avatars().configure(hash="md5").build(name=name, email=email)
+    assert f"/avatar/{digest}?" in url
+
+
+def test_hash_applies_to_proxied_photo_lookups(name, email):
+    digest = hashlib.sha256(email.encode()).hexdigest()
+    url = unquote(Avatars().build(name=name, email=email, mask="hexagon"))
+    assert f"/avatar/{digest}?s=128&d=404" in url
+
+
+def test_masks_without_an_email_proxy_the_initials_directly(name):
+    url = Avatars().build(name=name, mask="hexagon")
+    query = parse_qs(urlsplit(url).query)
+    assert query["url"] == [Avatars().build(name=name)]
+    assert query["mask"] == ["hexagon"]
+    assert "default" not in query
+    assert "gravatar" not in url
+
+
+def test_whole_float_options_drop_the_decimal(name, email):
+    assert "/2/1/0/1/1/" in Avatars().build(name=name, font_size=1.0)
+    assert "rgba(" not in Avatars().build(name=name, alpha=1.0)
+    assert ",1)" in unquote(Avatars().build(name=name, email=email, alpha=1.0))
+
+
+def test_unknown_hash_raises(name, email):
+    with raises(ValueError, match="unknown hash: 'sha1'"):
+        Avatars().build(name=name, email=email, hash="sha1")
 
 
 def test_unknown_source_raises(name, email):

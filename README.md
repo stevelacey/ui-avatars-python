@@ -11,6 +11,8 @@ Deterministic avatar URLs for light and dark designs:
 back to colored initials via [ui-avatars.com](https://ui-avatars.com).
 Same input, same URL, always.
 
+Also available for [PHP](https://github.com/stevelacey/ui-avatars-php) and [JavaScript](https://github.com/stevelacey/ui-avatars-js).
+
 <table>
 <tr>
 <td align="center"><a href="https://ui-avatars.com/api/AL/128/f9731633/f97316/2/0.4/0/1/1/svg"><img src="https://ui-avatars.com/api/AL/128/f9731633/f97316/2/0.4/0/1/1/svg" style="object-fit: contain" width="72" height="72"></a></td>
@@ -94,6 +96,7 @@ Options can be configured globally or overridden per call.
 | `font_color` | | Pin the text color |
 | `font_size` | `0.4` | Size of the initials (`0.1` to `1`) |
 | `format` | | Image format, e.g. `png`, `svg`, and other [formats](https://wsrv.nl/docs/format) |
+| `hash` | `sha256` | Email hash for photo lookups, `sha256` or `md5` |
 | `host` | `ui-avatars.com` | User initials avatars host |
 | `length` | `2` | Number of initials |
 | `mask` | | Shape mask, e.g. `hexagon`, `pentagon`, `square`, and other [masks](https://wsrv.nl/docs/mask) |

@@ -1,4 +1,4 @@
-from hashlib import md5
+import hashlib
 from typing import Literal
 from urllib.parse import quote, urlencode
 
@@ -32,6 +32,7 @@ class Avatars:
         font_color: str | None = None,
         font_size: float = 0.4,
         format: str | None = None,
+        hash: Literal["md5", "sha256"] = "sha256",
         host: str | None = None,
         length: int = 2,
         mask: str | None = None,
@@ -50,6 +51,7 @@ class Avatars:
         self.font_color = font_color
         self.font_size = font_size
         self.format = format
+        self.hash = hash
         self.host = host
         self.length = length
         self.mask = mask
@@ -74,6 +76,7 @@ class Avatars:
         font_color: str | None = None,
         font_size: float | None = None,
         format: str | None = None,
+        hash: Literal["md5", "sha256"] | None = None,
         host: str | None = None,
         length: int | None = None,
         mask: str | None = None,
@@ -91,6 +94,7 @@ class Avatars:
         font_color = self.font_color if font_color is None else font_color
         font_size = self.font_size if font_size is None else font_size
         format = self.format if format is None else format
+        hash = self.hash if hash is None else hash
         host = self.parse_hostname(host or self.host)
         image = self.parse_image(image, base)
         length = self.length if length is None else length
@@ -116,6 +120,9 @@ class Avatars:
         if region and region not in ("eu", "na"):
             raise ValueError(f"unknown region: {region!r}")
 
+        if hash not in ("md5", "sha256"):
+            raise ValueError(f"unknown hash: {hash!r}")
+
         if origin and "." not in origin:
             raise ValueError(f"unknown source: {source!r}")
 
@@ -128,7 +135,14 @@ class Avatars:
             name = "".join(c for c in local_part if c.isalpha())[:2] or local_part[:2]
 
         identity = (email or name).strip().lower().encode()
-        digest = md5(identity, usedforsecurity=False).hexdigest()
+        digest = hashlib.md5(identity, usedforsecurity=False).hexdigest()
+        email_hash = (
+            hashlib.new(
+                hash, email.strip().lower().encode(), usedforsecurity=False
+            ).hexdigest()
+            if email
+            else None
+        )
 
         palette_item = self.colors[int(digest[:8], 16) % len(self.colors)]
         palette_pair = (
@@ -151,7 +165,7 @@ class Avatars:
             text_color = "auto"
         elif format == "png":
             r, g, b = (int(background_color[i : i + 2], 16) for i in (0, 2, 4))
-            background_color = f"rgba({r},{g},{b},{alpha})"
+            background_color = f"rgba({r},{g},{b},{self.format_number(alpha)})"
         elif alpha < 1:
             alpha_suffix = f"{min(255, max(0, round(alpha * 255))):02x}"
             background_color = f"{background_color}{alpha_suffix}"
@@ -159,11 +173,11 @@ class Avatars:
         initials = generate_initials(name, length, uppercase=bool(uppercase))
         url = default = (
             f"{host}/api/{quote(initials)}/{size}/{background_color}/{text_color}/"
-            f"{length}/{font_size}/{rounded}/{bold}/{uppercase}/{format}"
+            f"{length}/{self.format_number(font_size)}/{rounded}/{bold}/{uppercase}/{format}"
         )
 
         if email:
-            url = self.build_url(f"{origin}/avatar/{digest}", s=size, d=default)
+            url = self.build_url(f"{origin}/avatar/{email_hash}", s=size, d=default)
 
         supported_default = "libravatar.org" not in origin or "ui-avatars.com" in host
         supported_format = output in ("png", "svg")
@@ -176,10 +190,15 @@ class Avatars:
             if not supported_format or not supported_mask:
                 default = self.build_url(f"{proxy}/", url=default, **params)
 
+            # Without a photo to look up, the proxy fetches the initials directly
+            photo = image or (
+                email and self.build_url(f"{origin}/avatar/{email_hash}", s=size, d=404)
+            )
+
             url = self.build_url(
                 f"{proxy}/",
-                url=image or self.build_url(f"{origin}/avatar/{digest}", s=size, d=404),
-                default=default,
+                url=photo or url,
+                default=default if photo else None,
                 fit="cover",
                 **params,
             )
@@ -197,6 +216,7 @@ class Avatars:
         font_color: str | None = None,
         font_size: float | None = None,
         format: str | None = None,
+        hash: Literal["md5", "sha256"] | None = None,
         host: str | None = None,
         length: int | None = None,
         mask: str | None = None,
@@ -223,6 +243,8 @@ class Avatars:
             self.font_size = font_size
         if format is not None:
             self.format = format
+        if hash is not None:
+            self.hash = hash
         if host is not None:
             self.host = host
         if length is not None:
@@ -247,6 +269,10 @@ class Avatars:
     def build_url(self, base, **params) -> str:
         params = {key: value for key, value in params.items() if value is not None}
         return f"{base}?{urlencode(params, quote_via=quote)}"
+
+    def format_number(self, value) -> str:
+        # Whole floats drop their ".0", matching the PHP and JavaScript packages
+        return str(int(value)) if float(value).is_integer() else str(value)
 
     def parse_hostname(self, value) -> str | None:
         return f"https://{value}" if value and "://" not in value else value

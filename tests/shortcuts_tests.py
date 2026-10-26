@@ -81,9 +81,24 @@ def test_is_deterministic(name):
     assert avatar_url(name=name) == avatar_url(name=name)
 
 
-def test_gravatar_hash_matches_email_hash(name, email):
+def test_gravatar_hash_is_the_sha256_of_the_email(name, email):
+    digest = hashlib.sha256(email.encode()).hexdigest()
+    assert f"/avatar/{digest}?" in avatar_url(name=name, email=email)
+
+
+def test_gravatar_hash_normalizes_the_email(email):
+    assert avatar_url(email=f" {email.upper()} ") == avatar_url(email=email)
+
+
+def test_md5_hash_is_still_available(name, email):
     digest = hashlib.md5(email.encode(), usedforsecurity=False).hexdigest()
-    assert digest in avatar_url(name=name, email=email)
+    assert f"/avatar/{digest}?" in avatar_url(name=name, email=email, hash="md5")
+
+
+def test_hash_does_not_change_the_color(name, email):
+    sha256 = unquote(avatar_url(name=name, email=email))
+    md5 = unquote(avatar_url(name=name, email=email, hash="md5"))
+    assert sha256.split("&d=")[1] == md5.split("&d=")[1]
 
 
 def test_color_is_picked_from_email_not_name_when_both_given(name, email):

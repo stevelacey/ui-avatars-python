@@ -1,4 +1,4 @@
-import hashlib
+from hashlib import md5, sha256
 from typing import Literal
 from urllib.parse import quote, urlencode
 
@@ -135,10 +135,10 @@ class Avatars:
             name = "".join(c for c in local_part if c.isalpha())[:2] or local_part[:2]
 
         identity = (email or name).strip().lower().encode()
-        digest = hashlib.md5(identity, usedforsecurity=False).hexdigest()
+        digest = md5(identity, usedforsecurity=False).hexdigest()
         email_hash = (
-            hashlib.new(
-                hash, email.strip().lower().encode(), usedforsecurity=False
+            (md5 if hash == "md5" else sha256)(
+                email.strip().lower().encode(), usedforsecurity=False
             ).hexdigest()
             if email
             else None

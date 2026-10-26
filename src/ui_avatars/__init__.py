@@ -2,6 +2,6 @@
 
 from ui_avatars.generator import Avatars, avatars
 from ui_avatars.mixins import AvatarMixin
-from ui_avatars.shortcuts import avatar_url
+from ui_avatars.shortcuts import avatar_url, is_local
 
-__all__ = ["AvatarMixin", "Avatars", "avatar_url", "avatars"]
+__all__ = ["AvatarMixin", "Avatars", "avatar_url", "avatars", "is_local"]

@@ -5,6 +5,7 @@ from urllib.parse import quote, urlencode
 from tailwind_colors import TCH
 
 from ui_avatars.initials import generate_initials
+from ui_avatars.shortcuts import is_local
 
 
 class Avatars:
@@ -125,6 +126,10 @@ class Avatars:
 
         if origin and "." not in origin:
             raise ValueError(f"unknown source: {source!r}")
+
+        # The proxy can't reach relative or local images, so serve them as they are
+        if image and is_local(image):
+            return image
 
         host = host or region and self.HOST.replace("//", f"//{region}.") or self.HOST
         output = format or "png"
@@ -271,7 +276,7 @@ class Avatars:
         return f"{base}?{urlencode(params, quote_via=quote)}"
 
     def format_number(self, value) -> str:
-        # Whole floats drop their ".0", matching the PHP and JavaScript packages
+        # Whole floats drop their ".0"
         return str(int(value)) if float(value).is_integer() else str(value)
 
     def parse_hostname(self, value) -> str | None:

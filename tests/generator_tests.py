@@ -2,7 +2,7 @@ import hashlib
 import re
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from pytest import raises
+from pytest import mark, raises
 
 from ui_avatars import Avatars, avatars
 
@@ -904,8 +904,7 @@ def test_image_django_field_file_emulation_with_file(name):
 
     avatars = Avatars()
     field = MockDjangoFieldFile("avatars/ada.png")
-    url = avatars.build(name=name, image=field)
-    assert "%2Fmedia%2Favatars%2Fada.png" in url
+    assert avatars.build(name=name, image=field) == "/media/avatars/ada.png"
 
 
 def test_image_django_field_file_emulation_without_file(name):
@@ -1014,9 +1013,67 @@ def test_base_can_be_overridden_per_call_without_mutating_the_instance(name):
     assert avatars.base == "https://example.com"
 
 
-def test_build_without_base_leaves_relative_image_url_unchanged(name):
-    url = Avatars().build(name=name, image="/media/avatar.jpg")
-    assert "%2Fmedia%2Favatar.jpg" in url
+def test_build_without_base_serves_relative_image_url_unchanged(name, email):
+    url = Avatars().build(
+        name=name, email=email, image="/media/avatar.jpg", mask="hexagon"
+    )
+    assert url == "/media/avatar.jpg"
+
+
+@mark.parametrize(
+    "image",
+    [
+        "media/avatar.jpg",
+        "//cdn.example.com/avatar.jpg",
+        "http://localhost:8000/avatar.jpg",
+        "http://app.localhost/avatar.jpg",
+        "https://myapp.test/avatar.jpg",
+        "http://box.local/avatar.jpg",
+        "http://myapp.internal/avatar.jpg",
+        "http://nas.lan/avatar.jpg",
+        "http://router.home.arpa/avatar.jpg",
+        "https://foo.example/avatar.jpg",
+        "http://myapp:8000/avatar.jpg",
+        "http://LOCALHOST./avatar.jpg",
+        "http://user:pass@localhost/avatar.jpg",
+        "http://0.0.0.0:8000/avatar.jpg",
+        "http://127.0.0.1/avatar.jpg",
+        "http://10.0.0.5/avatar.jpg",
+        "http://169.254.1.1/avatar.jpg",
+        "http://172.16.0.1/avatar.jpg",
+        "http://172.31.255.255/avatar.jpg",
+        "http://192.168.1.2:8080/avatar.jpg",
+        "http://[::1]:8000/avatar.jpg",
+        "http://[fd00::1]/avatar.jpg",
+        "http://[fe80::1]/avatar.jpg",
+    ],
+)
+def test_local_images_are_served_unchanged(name, image):
+    assert Avatars().build(name=name, image=image, rounded=True) == image
+
+
+@mark.parametrize(
+    "image",
+    [
+        "https://example.com/avatar.jpg",
+        "https://cdn.example.com/avatar.jpg?size=2",
+        "http://172.32.0.1/avatar.jpg",
+        "http://8.8.8.8/avatar.jpg",
+        "https://10.example.com/avatar.jpg",
+        "https://172.16.0.1.nip.io/avatar.jpg",
+        "http://[2001:db8::1]/avatar.jpg",
+        "https://testing.com/avatar.jpg",
+    ],
+)
+def test_public_images_are_proxied(name, image):
+    assert Avatars().build(name=name, image=image).startswith("https://wsrv.nl/?url=")
+
+
+def test_base_on_a_local_host_serves_the_image_unchanged(name):
+    url = Avatars(base="http://localhost:8000").build(
+        name=name, image="/media/avatar.jpg"
+    )
+    assert url == "http://localhost:8000/media/avatar.jpg"
 
 
 def test_configure_updates_base_in_place():

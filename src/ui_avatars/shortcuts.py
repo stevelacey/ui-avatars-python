@@ -1,4 +1,12 @@
-from ui_avatars.generator import avatars
+import re
+
+from ui_avatars import generator
+
+LOCAL_HOST = re.compile(
+    r"^(localhost|[^.:]+|.+\.(localhost|test|local|internal|lan|example|home\.arpa)"
+    r"|(127|10|192\.168|169\.254|172\.(1[6-9]|2\d|3[01]))\.[\d.]+|0\.0\.0\.0"
+    r"|::1|f[cd][\da-f]*:.*|fe[89ab][\da-f]*:.*)$"
+)
 
 
 def avatar_url(
@@ -25,7 +33,7 @@ def avatar_url(
     source: str | None = None,
     uppercase: bool | None = None,
 ) -> str:
-    return avatars.build(
+    return generator.avatars.build(
         name=name,
         email=email,
         image=image,
@@ -48,3 +56,12 @@ def avatar_url(
         source=source,
         uppercase=uppercase,
     )
+
+
+def is_local(url: str) -> bool:
+    if "://" not in url:
+        return True
+    authority = url.split("://", 1)[1].split("/")[0].split("?")[0].split("#")[0]
+    host = authority.rsplit("@", 1)[-1]
+    host = host[1:].split("]")[0] if host.startswith("[") else host.split(":")[0]
+    return bool(LOCAL_HOST.match(host.lower().rstrip(".")))
